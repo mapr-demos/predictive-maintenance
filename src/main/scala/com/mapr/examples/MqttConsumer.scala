@@ -7,8 +7,18 @@ import org.apache.spark.sql.{SparkSession, _}
 import org.apache.spark.sql.types._
 import org.apache.spark.streaming.kafka09.{ConsumerStrategies, KafkaUtils, LocationStrategies}
 import org.apache.spark.streaming.{Seconds, StreamingContext, Time}
+import org.apache.spark.sql.SparkSession
+import com.mapr.db.spark.sql._
+import org.apache.spark.sql.functions.monotonically_increasing_id
+import org.apache.spark.sql.functions.lit
 
 /*
+
+PURPOSE: Save all metrics to a mapr-db table.
+USAGE:
+  `mvn package`
+  copy the uber jar to your cluster
+  java -cp factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.MqttConsumer /apps/mqtt:opto22
 
 */
 object MqttConsumer {
@@ -381,12 +391,37 @@ object MqttConsumer {
         // devices' humidity, compute averages, groupBy cca3 country codes,
         // and display the results, using table and bar charts
 //        val dsAvgTmp = ds.filter(d => {d.Panel2Power != "0"}).map(d => (d.Chiller1PumpStatus, d.Chiller2PumpStatus, d.Boiler1PumpStatus, d.Boiler2PumpStatus, d.Panel1Power, d.Panel2Power, d.Panel3Power))
-        ds.filter(d => {d.Panel2Power != "0"}).map(d => (d.Chiller1PumpStatus, d.Chiller2PumpStatus, d.Boiler1PumpStatus, d.Boiler2PumpStatus, d.Panel1Power, d.Panel2Power, d.Panel3Power)).show()
 
-        println(ds.filter(d => {d.Chiller1PumpStatus == "1"}).count()+"\n"+
-        ds.filter(d => {d.Chiller2PumpStatus == "1"}).count()+"\n"+
-        ds.filter(d => {d.Boiler1PumpStatus == "1"}).count()+"\n"+
-        ds.filter(d => {d.Boiler2PumpStatus == "1"}).count()+"\n")
+        // Here's an example showing how to filter a dataset
+//        println(ds.filter(d => {d.Chiller1PumpStatus == "1"}).count()+"\n"+
+//        ds.filter(d => {d.Chiller2PumpStatus == "1"}).count()+"\n"+
+//        ds.filter(d => {d.Boiler1PumpStatus == "1"}).count()+"\n"+
+//        ds.filter(d => {d.Boiler2PumpStatus == "1"}).count()+"\n")
+
+        // Here's an example showing how to only look at data while the factory is operating (because Panel2Power will always be nonzero then)
+        val ds2 = ds.filter(d => {d.Panel2Power != "0"}).map(d => (d.Chiller1PumpStatus, d.Chiller2PumpStatus, d.Boiler1PumpStatus, d.Boiler2PumpStatus, d.Panel1Power, d.Panel2Power, d.Panel3Power))
+        ds2.show()
+
+        // Every time we receive a new metric data, we want to derive a new metric called "about to fail". This is a lagging feature which we'll retroactively update once a failure occurs so that we can use that data for training a predictive maintenance model. So, here's how to add that metric to what we're saving in MapR-DB:
+        // Use underscore in the column name to denote that this column was derived
+        // create a column which can be used as an index:
+        // create other columns to be used as lagging features for supervised ML
+        val ds3 = ds
+          .withColumn("_id", monotonically_increasing_id.cast("String"))
+          .withColumn("_Chiller1AboutToFail", lit(false))
+          .withColumn("_Chiller1RemainingUsefulLife", lit("0"))
+          .withColumn("_Chiller2AboutToFail", lit(false))
+          .withColumn("_Chiller2RemainingUsefulLife", lit("0"))
+          .withColumn("_Boiler1AboutToFail", lit(false))
+          .withColumn("_Boiler1RemainingUsefulLife", lit("0"))
+          .withColumn("_Boiler2AboutToFail", lit(false))
+          .withColumn("_Boiler2RemainingUsefulLife", lit("0"))
+
+        try{
+          ds3.saveToMapRDB("/tmp/iantest", createTable = false)
+        } catch {
+          case e: com.mapr.db.exceptions.TableNotFoundException => ds3.saveToMapRDB("/tmp/iantest", createTable = true)
+        }
 
         //        df.createOrReplaceTempView("mqtt_snapshot")
 //        spark.sql("select count(*) from mqtt_snapshot").show
