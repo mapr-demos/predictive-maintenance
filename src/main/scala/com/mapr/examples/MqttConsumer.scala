@@ -9,21 +9,21 @@ import org.apache.spark.streaming.kafka09.{ConsumerStrategies, KafkaUtils, Locat
 import org.apache.spark.streaming.{Seconds, StreamingContext, Time}
 import org.apache.spark.sql.SparkSession
 import com.mapr.db.spark.sql._
-import org.apache.spark.sql.functions.monotonically_increasing_id
 import org.apache.spark.sql.functions.lit
 
 /*
 
-PURPOSE: Save all metrics to a mapr-db table.
+PURPOSE: Save all metrics to a mapr-db table. Delimit multiple streams by a comma in the first command-line arg
 USAGE:
   `mvn package`
   copy the uber jar to your cluster
-  java -cp factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.MqttConsumer /apps/mqtt:opto22
+  java -cp factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.MqttConsumer /apps/mystream:mytopic1[,/apps/mystream:mytopic2] /apps/mytable
 
 */
 object MqttConsumer {
 
-  case class MqttRecord(OutsideAirTemp: String,
+  case class MqttRecord(timestamp: String,
+                        OutsideAirTemp: String,
                         DaylightSensor: String,
                         BoilerReturnTemp: String,
                         BoilerFlowTemp: String,
@@ -175,21 +175,13 @@ object MqttConsumer {
                         AH4ReturnDamper: String,
                         AH4OaOutDamper: String) extends Serializable
 
-  case class DeviceIoTData ( Chiller1PumpStatus: String,
-                             Chiller2PumpStatus: String,
-                             Boiler1PumpStatus: String,
-                             Boiler2PumpStatus: String,
-                             Panel1Power: String,
-                             Panel2Power: String,
-                             Panel3Power: String
-                           ) extends Serializable
-
   def main(args: Array[String]): Unit = {
-    if (args.length < 1) {
-      System.err.println("Usage: MqttConsumer <stream:topic> ")
+    if (args.length < 2) {
+      System.err.println("Usage: MqttConsumer <stream:topic> <table>")
       System.exit(1)
     }
     val schema = StructType(Array(
+      StructField("timestamp", StringType, nullable = true),
       StructField("OutsideAirTemp", StringType, nullable = true),
       StructField("DaylightSensor", StringType, nullable = true),
       StructField("BoilerReturnTemp", StringType, nullable = true),
@@ -343,7 +335,6 @@ object MqttConsumer {
       StructField("AH4OaOutDamper", StringType, nullable = true)
     ))
 
-    val Array(topicc) = args
     val groupId = "testgroup"
     val offsetReset = "earliest"  //  "latest"
     val pollTimeout = "5000"
@@ -355,7 +346,7 @@ object MqttConsumer {
     val ssc = new StreamingContext(sparkConf, Seconds(2))
 
     ssc.sparkContext.setLogLevel("ERROR")
-    val topicsSet = topicc.split(",").toSet
+    val topicsSet = args(0).split(",").toSet
 
     val kafkaParams = Map[String, String](
       ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG -> brokers,
@@ -399,15 +390,14 @@ object MqttConsumer {
 //        ds.filter(d => {d.Boiler2PumpStatus == "1"}).count()+"\n")
 
         // Here's an example showing how to only look at data while the factory is operating (because Panel2Power will always be nonzero then)
-        val ds2 = ds.filter(d => {d.Panel2Power != "0"}).map(d => (d.Chiller1PumpStatus, d.Chiller2PumpStatus, d.Boiler1PumpStatus, d.Boiler2PumpStatus, d.Panel1Power, d.Panel2Power, d.Panel3Power))
-        ds2.show()
+//        val ds2 = ds.filter(d => {d.Panel2Power != "0"}).map(d => (d.Chiller1PumpStatus, d.Chiller2PumpStatus, d.Boiler1PumpStatus, d.Boiler2PumpStatus, d.Panel1Power, d.Panel2Power, d.Panel3Power))
+        ds.map(d => (d.timestamp, d.OutsideAirTemp, d.Panel1Power, d.Panel2Power, d.Panel3Power)).show()
 
         // Every time we receive a new metric data, we want to derive a new metric called "about to fail". This is a lagging feature which we'll retroactively update once a failure occurs so that we can use that data for training a predictive maintenance model. So, here's how to add that metric to what we're saving in MapR-DB:
         // Use underscore in the column name to denote that this column was derived
         // create a column which can be used as an index:
         // create other columns to be used as lagging features for supervised ML
         val ds3 = ds
-          .withColumn("_id", monotonically_increasing_id.cast("String"))
           .withColumn("_Chiller1AboutToFail", lit(false))
           .withColumn("_Chiller1RemainingUsefulLife", lit("0"))
           .withColumn("_Chiller2AboutToFail", lit(false))
@@ -418,9 +408,10 @@ object MqttConsumer {
           .withColumn("_Boiler2RemainingUsefulLife", lit("0"))
 
         try{
-          ds3.saveToMapRDB("/tmp/iantest", createTable = false)
+          ds3.saveToMapRDB(tableName = args(1), idFieldPath = "timestamp", createTable = false)
         } catch {
-          case e: com.mapr.db.exceptions.TableNotFoundException => ds3.saveToMapRDB("/tmp/iantest", createTable = true)
+          case e: com.mapr.db.exceptions.TableNotFoundException =>
+            ds3.saveToMapRDB(tableName = args(1), idFieldPath = "timestamp", createTable = true)
         }
 
         //        df.createOrReplaceTempView("mqtt_snapshot")
