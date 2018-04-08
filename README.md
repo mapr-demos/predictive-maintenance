@@ -1,6 +1,19 @@
-This project shows how to build a data architecture for predictive maintenance of instrumented machinery. There are two primary data flows. One flow is intended to persist IoT data and label training data for sequence prediction and anomaly detection of time-series data in Tensorflow. The second flow is intended to persist time-series IoT data in OpenTSDB for visualization in a Grafana dashboard. 
+
+# How to use MapR for Predictive Maintenance Applications
+
+MapR is a good platform to use for Predictive Maintenance because it has the following charactersistics:
+* MapR Streams provide a convenient way to ingest IoT data, which is often sampled frequently, and never ends. (i.e. it's a stream)
+* The integration of MapR DB with Spark provides a convenient way to label lagging features needed for predicting failures via supervised Machine Learning.
+* Drill provides a convenient way to load ML data sets into Tensorflow for unsupervised and supervised machine learning
+ 
+This project is intended to show how to build a data architecture for predictive maintenance using MapR. There are two primary data flows. 
+
+1. One flow is intended to persist IoT data and label training data for sequence prediction and anomaly detection of time-series data in Tensorflow. 
+2. The second flow is intended to persist time-series IoT data in OpenTSDB for visualization in a Grafana dashboard. 
 
 ![data flow diagram](/images/dataflow.png?raw=true "Data Flow")
+
+# Usage
 
 Compile:
 
