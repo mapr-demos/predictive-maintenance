@@ -15,6 +15,10 @@ This project is intended to show how to build a data architecture for predictive
 
 # Usage
 
+Download:
+
+`git clone https://github.com/mapr-demos/factory-iot-tutorial`
+
 Compile:
 
 `mvn compile`
@@ -23,7 +27,7 @@ Build minimal jar:
 
 `mvn package`
 
-Build uber jar and copy dependencies to target/lib/:
+Copy dependencies to target/lib/:
 
 `mvn install`
 
@@ -60,9 +64,7 @@ Update Lagging features in mqtt table:
 java -cp target/factory-iot-tutorial-1.0.jar:target/lib/* com.mapr.examples.UpdateLaggingFeatures /apps/mqtt:failure /tmp/iantest
 ```
 
-
-
-Validate:
+Here are a few examples to validate the database with dbshell:
 
 ```
 $ mapr dbshell
