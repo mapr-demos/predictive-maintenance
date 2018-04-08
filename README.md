@@ -1,4 +1,6 @@
-# BUILD
+This project shows how to build a data architecture for predictive maintenance of instrumented machinery. There are two primary data flows. One flow is intended to persist IoT data and label training data for sequence prediction and anomaly detection of time-series data in Tensorflow. The second flow is intended to persist time-series IoT data in OpenTSDB for visualization in a Grafana dashboard. 
+
+![data flow diagram](/images/dataflow.png?raw=true "Data Flow")
 
 Compile:
 
