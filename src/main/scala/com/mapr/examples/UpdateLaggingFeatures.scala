@@ -9,7 +9,7 @@ import org.apache.spark.streaming.kafka09.{ConsumerStrategies, KafkaUtils, Locat
 import org.apache.spark.streaming.{Seconds, StreamingContext, Time}
 import org.apache.spark.sql.SparkSession
 import com.mapr.db.spark.sql._
-import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.functions._
 import com.mapr.db.spark._
 import com.mapr.db.spark.field
 
@@ -80,6 +80,7 @@ object UpdateLaggingFeatures {
         val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
         import spark.implicits._
         val ds: Dataset[FailureEvent] = spark.read.schema(schema).json(rdd).as[FailureEvent]
+        println("Failure events received from stream: " + args(0) + ":")
         ds.show()
 
 
@@ -89,34 +90,68 @@ object UpdateLaggingFeatures {
 //          println(_)
 //        )
 
-        // get the first failure time like this:
+        // get the first failure time:
         val failure_time = ds.select("timestamp").map(r => r.getString(0)).collect()(0).toString()
+        // get the corresponding failed device:
+        val deviceName = ds.select("deviceName").map(r => r.getString(0)).collect()(0).toString()
 
         // Load the MQTT data table from MapR-DB JSON
         // The table schema will be inferred when we loadFromMapRDB:
         val mqtt_rdd = sc.loadFromMapRDB(tableName)
 
         // We can select rows and filter on that RDD as shown below:
-        println("Total number of rows in " + tableName + ":")
+        println("Total number of records in table " + tableName + ":")
         println(mqtt_rdd.map(a => {a.timestamp}).count)
 //        println(ds.filter(a => {a.timestamp >= failure_time}).map(a => {a.timestamp}).count)
 
-        mqtt_rdd.toDF().rdd.map { row => (row.getAs("timestamp").toString)}.take(3)
+        //mqtt_rdd.toDF().rdd.map { row => (row.getAs("timestamp").toString)}.take(3)
 
-        val rows_to_update = mqtt_rdd.where(field("timestamp") >= failure_time)
-        println("Total number of rows with timestamp > " + failure_time + ":\n" + rows_to_update.count)
+        // Mark the device as "about to fail" for a period of time leading up to failure_time
+        val failure_window = "20"  // in seconds, to match Unix time given by `date +%s`
+        val failure_imminent = (failure_time.toInt - failure_window.toInt).toString
+
+        // For more information about how to specify filter conditions with MapR-DB, see:
+        // https://maprdocs.mapr.com/home/Spark/ScalaDSLforSpecifyingPredicates.html
+
+        val rows_to_update = mqtt_rdd.where(field("timestamp") >= failure_imminent and field("timestamp") <= failure_time)
+        println("Number of samples recorded while failure was imminent (from t="+failure_imminent+" to t="+failure_time+")\n" + rows_to_update.count)
         // another way of doing the same thing:
         val mqtt_df = mqtt_rdd.toDF()
-        val rows_to_update_df = mqtt_df.filter(mqtt_df("timestamp") > failure_time)
+        // "AboutToFail" is a binary lagging feature intended to be used to classify whether failure is imminent
+        val binary_lagging_feature = mqtt_df.filter(mqtt_df("timestamp") >= failure_imminent and mqtt_df("timestamp") <= failure_time)
+           .select("_id","timestamp", "_"+deviceName+"RemainingUsefulLife")
+           .withColumn("_"+deviceName+"AboutToFail", lit("true"))
 
-        val df_containing_updated_lag_vars = rows_to_update_df
-          .withColumn("_Chiller1AboutToFail", lit(true))
+        println("Binary lagging feature:")
+        binary_lagging_feature.orderBy(desc("timestamp")).show()
 
-        // print a summary of what has been updated
-        df_containing_updated_lag_vars.select("_id","OutsideAirTemp","timestamp","_Chiller1AboutToFail").show
+        // "RemainingUsefulLife" is a continuous lagging feature, calculated for all values since the last failure event indicated by "About To Fail" == true, and intended to be used to predict how much time is left before the next failure
+        val continuous_lagging_feature = mqtt_df
+            .filter(mqtt_df("timestamp") < failure_imminent and
+              mqtt_df("_"+deviceName+"AboutToFail") === lit("false") and
+              mqtt_df("_"+deviceName+"RemainingUsefulLife") === lit(0))
+            .select("_id","timestamp","_"+deviceName+"AboutToFail")
+            .withColumn("_"+deviceName+"RemainingUsefulLife", lit(failure_imminent.toInt)-mqtt_df.col("timestamp"))
 
-        // persist the updated rows to MapR-DB
-        df_containing_updated_lag_vars.write.option("Operation", "Update").saveToMapRDB(tableName)
+        println("Continuous lagging feature:")
+        continuous_lagging_feature.orderBy(desc("timestamp")).show()
+
+        // combine the two lagging features
+        val lag_vars = binary_lagging_feature.join(continuous_lagging_feature, Seq("_id","timestamp","_"+deviceName+"AboutToFail","_"+deviceName+"RemainingUsefulLife"), "outer")
+        println("Joined lagging features:")
+        lag_vars.orderBy(desc("timestamp")).show()
+        // persist lagging features to MapR-DB
+        lag_vars.write.option("Operation", "Update").saveToMapRDB(tableName)
+
+        // print a summary of the records which have been updated
+//        sc.loadFromMapRDB(tableName).where(field("timestamp") >= failure_imminent and field("timestamp") <= failure_time).select("timestamp","OutsideAirTemp","_"+deviceName+"AboutToFail")
+        val mqtt_df2 = sc.loadFromMapRDB(tableName).toDF()
+        println("Current MapR-DB table:")
+        mqtt_df2
+          .filter(mqtt_df2("timestamp") <= failure_time)
+          .select("timestamp","_"+deviceName+"AboutToFail","_"+deviceName+"RemainingUsefulLife")
+          .orderBy(desc("timestamp"))
+          .show(rows_to_update.count.toInt+5)
 
         println("---done---")
       }

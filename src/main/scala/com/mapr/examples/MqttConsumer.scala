@@ -371,7 +371,7 @@ object MqttConsumer {
       // There exists at least one element in RDD
       if (!rdd.isEmpty) {
         val count = rdd.count
-        println("count received " + count)
+        println("messages received on "+args(0)+": " + count)
         val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
         import spark.implicits._
         val ds: Dataset[MqttRecord] = spark.read.schema(schema).json(rdd).as[MqttRecord]
@@ -391,20 +391,23 @@ object MqttConsumer {
 
         // Here's an example showing how to only look at data while the factory is operating (because Panel2Power will always be nonzero then)
 //        val ds2 = ds.filter(d => {d.Panel2Power != "0"}).map(d => (d.Chiller1PumpStatus, d.Chiller2PumpStatus, d.Boiler1PumpStatus, d.Boiler2PumpStatus, d.Panel1Power, d.Panel2Power, d.Panel3Power))
-        ds.map(d => (d.timestamp, d.OutsideAirTemp, d.Panel1Power, d.Panel2Power, d.Panel3Power)).show()
+        ds.select("timestamp","OutsideAirTemp","Panel1Power","Panel2Power","Panel3Power").show
+        // Here's another way to show those columns:
+        // ds.map(d => (d.timestamp, d.OutsideAirTemp, d.Panel1Power, d.Panel2Power, d.Panel3Power)).show()
+
 
         // Every time we receive a new metric data, we want to derive a new metric called "about to fail". This is a lagging feature which we'll retroactively update once a failure occurs so that we can use that data for training a predictive maintenance model. So, here's how to add that metric to what we're saving in MapR-DB:
         // Use underscore in the column name to denote that this column was derived
         // create a column which can be used as an index:
         // create other columns to be used as lagging features for supervised ML
         val ds3 = ds
-          .withColumn("_Chiller1AboutToFail", lit(false))
+          .withColumn("_Chiller1AboutToFail", lit("false"))
           .withColumn("_Chiller1RemainingUsefulLife", lit("0"))
-          .withColumn("_Chiller2AboutToFail", lit(false))
+          .withColumn("_Chiller2AboutToFail", lit("false"))
           .withColumn("_Chiller2RemainingUsefulLife", lit("0"))
-          .withColumn("_Boiler1AboutToFail", lit(false))
+          .withColumn("_Boiler1AboutToFail", lit("false"))
           .withColumn("_Boiler1RemainingUsefulLife", lit("0"))
-          .withColumn("_Boiler2AboutToFail", lit(false))
+          .withColumn("_Boiler2AboutToFail", lit("false"))
           .withColumn("_Boiler2RemainingUsefulLife", lit("0"))
 
         try{
