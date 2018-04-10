@@ -55,13 +55,21 @@ java -cp target/factory-iot-tutorial-1.0.jar:target/lib/* com.mapr.examples.Mqtt
 Synthesize failure stream:
 
 ```
-echo "{\"timestamp\":"$(date +%s)",\"deviceName\":\"Chiller1\"}" | /opt/mapr/kafka/kafka-0.9.0/bin/kafka-console-producer.sh --topic /apps/mqtt:failure --broker-list this.will.be.ignored:9092
+echo "{\"timestamp\":"$(date +%s -d '60 sec ago')",\"deviceName\":\"Chiller1\"}" | /opt/mapr/kafka/kafka-0.9.0/bin/kafka-console-producer.sh --topic /apps/mqtt:failure --broker-list this.will.be.ignored:9092
 ```
 
 Update Lagging features in mqtt table:
 
 ```
 java -cp target/factory-iot-tutorial-1.0.jar:target/lib/* com.mapr.examples.UpdateLaggingFeatures /apps/mqtt:failure /tmp/iantest
+```
+
+Then validate that those lagging features have been updated:
+
+```
+$ mapr dbshell
+find /tmp/iantest --where '{ "$eq" : {"_Chiller1AboutToFail":true} }' --f _id,_Chiller1AboutToFail,timestamp
+find /tmp/iantest --where '{ "$eq" : {"timestamp":"1523339687"} }' --f _id,_Chiller1AboutToFail,timestamp
 ```
 
 Here are a few examples to validate the database with dbshell:

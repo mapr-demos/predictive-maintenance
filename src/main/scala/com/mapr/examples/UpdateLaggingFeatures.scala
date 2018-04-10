@@ -1,18 +1,17 @@
 package com.mapr.examples
 
-import com.mapr.db.spark._
-import com.mapr.db.spark.field
-import com.mapr.db.spark.sql._
 import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{SparkSession, _}
-import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types._
 import org.apache.spark.streaming.kafka09.{ConsumerStrategies, KafkaUtils, LocationStrategies}
 import org.apache.spark.streaming.{Seconds, StreamingContext, Time}
-import com.fasterxml.jackson.annotation.{JsonIgnoreProperties, JsonProperty}
-import com.mapr.examples.MqttConsumer.MqttRecord
+import org.apache.spark.sql.SparkSession
+import com.mapr.db.spark.sql._
+import org.apache.spark.sql.functions.lit
+import com.mapr.db.spark._
+import com.mapr.db.spark.field
 
 
 /*
@@ -75,7 +74,6 @@ object UpdateLaggingFeatures {
 
     val valuesDStream = messagesDStream.map(_.value())
     val tableName: String = args(1)
-    import com.mapr.db.spark._
 
     valuesDStream.foreachRDD { (rdd: RDD[String]) =>
       if (!rdd.isEmpty) {
@@ -84,28 +82,42 @@ object UpdateLaggingFeatures {
         val ds: Dataset[FailureEvent] = spark.read.schema(schema).json(rdd).as[FailureEvent]
         ds.show()
 
+
+        // TODO: iterate on each reported failure, not just the first one.
+        // iterate through all the timestamps like this:
+//        ds.select("timestamp").map(r => r.getString(0)).foreach(
+//          println(_)
+//        )
+
         // get the first failure time like this:
         val failure_time = ds.select("timestamp").map(r => r.getString(0)).collect()(0).toString()
 
-        // iterate through all the timestamps like this:
-        ds.select("timestamp").map(r => r.getString(0)).foreach(
-          // print the timestamp
-          println(_)
-        )
-
         // Load the MQTT data table from MapR-DB JSON
-        // The table schema will be inferred when we loadFromMapRDB, like this:
-        val maprd = sc.loadFromMapRDB(tableName)
+        // The table schema will be inferred when we loadFromMapRDB:
+        val mqtt_rdd = sc.loadFromMapRDB(tableName)
 
         // We can select rows and filter on that RDD as shown below:
-        // It's probably faster to filter by where clauses (as shown below) rather than using .filter
-        // because the MapR-DB connector for spark will push down where clauses to MapR-DB.
         println("Total number of rows in " + tableName + ":")
-        println(maprd.map(a => {a.timestamp}).count)
-        println(sc.loadFromMapRDB("/tmp/iantest").select("timestamp").count)
-        println("Total number of rows with timestamp > " + failure_time + ":")
-        ds.filter(a => {a.timestamp >= failure_time}).map(a => {a.timestamp}).count
-        println(sc.loadFromMapRDB("/tmp/iantest").where(field("timestamp") >= failure_time).count)
+        println(mqtt_rdd.map(a => {a.timestamp}).count)
+//        println(ds.filter(a => {a.timestamp >= failure_time}).map(a => {a.timestamp}).count)
+
+        mqtt_rdd.toDF().rdd.map { row => (row.getAs("timestamp").toString)}.take(3)
+
+        val rows_to_update = mqtt_rdd.where(field("timestamp") >= failure_time)
+        println("Total number of rows with timestamp > " + failure_time + ":\n" + rows_to_update.count)
+        // another way of doing the same thing:
+        val mqtt_df = mqtt_rdd.toDF()
+        val rows_to_update_df = mqtt_df.filter(mqtt_df("timestamp") > failure_time)
+
+        val df_containing_updated_lag_vars = rows_to_update_df
+          .withColumn("_Chiller1AboutToFail", lit(true))
+
+        // print a summary of what has been updated
+        df_containing_updated_lag_vars.select("_id","OutsideAirTemp","timestamp","_Chiller1AboutToFail").show
+
+        // persist the updated rows to MapR-DB
+        df_containing_updated_lag_vars.write.option("Operation", "Update").saveToMapRDB(tableName)
+
         println("---done---")
       }
     }
