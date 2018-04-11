@@ -9,7 +9,7 @@ import org.apache.spark.streaming.kafka09.{ConsumerStrategies, KafkaUtils, Locat
 import org.apache.spark.streaming.{Seconds, StreamingContext, Time}
 import org.apache.spark.sql.SparkSession
 import com.mapr.db.spark.sql._
-import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.functions._
 
 /*
 
@@ -410,11 +410,31 @@ object MqttConsumer {
           .withColumn("_Boiler2AboutToFail", lit("false"))
           .withColumn("_Boiler2RemainingUsefulLife", lit("0"))
 
+        // Derive datetime features
+
+        val ds4 = ds3.select($"*", unix_timestamp($"timestamp", "s").cast(TimestampType).as("unix_time"))
+          .selectExpr("*", "to_date(unix_time) as date_value")
+          .withColumn("date_key",expr("date_format(date_value, 'YYYYMMdd')"))
+          .withColumn("year_key", year(from_unixtime(col("timestamp"))))
+          .withColumn("quarter_of_year", quarter(from_unixtime(col("timestamp"))))
+          .selectExpr("*", s"concat('Q', quarter_of_year) as quarter_short")
+          .withColumn("month_of_year", month(from_unixtime(col("timestamp"))))
+          .withColumn("day_number_of_week", from_unixtime(col("timestamp"), "u").cast("Int"))
+          .selectExpr("*", """CASE WHEN day_number_of_week > 5 THEN true ELSE false END as weekend""")
+          .withColumn("day_of_week_long", from_unixtime(col("timestamp"), "EEEEEEEEE"))
+          .withColumn("month_long", from_unixtime(col("timestamp"), "MMMMMMMM"))
+          .withColumn("week_key",expr("date_format(date_value, 'ww')"))
+
+        // We can't persist TimestampType fields because that can't be converted to OJAI types
+        // so just select the fields that are primitive string or number types
+        val ds5 = ds3.join(ds4.select("timestamp","year_key","week_key","month_of_year","month_long","day_number_of_week","day_of_week_long","weekend","quarter_of_year","quarter_short"), Seq("timestamp"))
+        ds5.printSchema()
+
         try{
-          ds3.saveToMapRDB(tableName = args(1), idFieldPath = "timestamp", createTable = false)
+          ds5.saveToMapRDB(tableName = args(1), idFieldPath = "timestamp", createTable = false)
         } catch {
           case e: com.mapr.db.exceptions.TableNotFoundException =>
-            ds3.saveToMapRDB(tableName = args(1), idFieldPath = "timestamp", createTable = true)
+            ds5.saveToMapRDB(tableName = args(1), idFieldPath = "timestamp", createTable = true)
         }
 
         //        df.createOrReplaceTempView("mqtt_snapshot")
