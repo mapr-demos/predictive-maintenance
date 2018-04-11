@@ -122,8 +122,8 @@ object UpdateLaggingFeatures {
            .select("_id","timestamp", "_"+deviceName+"RemainingUsefulLife")
            .withColumn("_"+deviceName+"AboutToFail", lit("true"))
 
-        println("Binary lagging feature:")
-        binary_lagging_feature.orderBy(desc("timestamp")).show()
+//        println("Binary lagging feature:")
+//        binary_lagging_feature.orderBy(desc("timestamp")).show()
 
         // "RemainingUsefulLife" is a continuous lagging feature, calculated for all values since the last failure event indicated by "About To Fail" == true, and intended to be used to predict how much time is left before the next failure
         val continuous_lagging_feature = mqtt_df
@@ -133,12 +133,12 @@ object UpdateLaggingFeatures {
             .select("_id","timestamp","_"+deviceName+"AboutToFail")
             .withColumn("_"+deviceName+"RemainingUsefulLife", lit(failure_imminent.toInt)-mqtt_df.col("timestamp"))
 
-        println("Continuous lagging feature:")
-        continuous_lagging_feature.orderBy(desc("timestamp")).show()
+//        println("Continuous lagging feature:")
+//        continuous_lagging_feature.orderBy(desc("timestamp")).show()
 
         // combine the two lagging features
         val lag_vars = binary_lagging_feature.join(continuous_lagging_feature, Seq("_id","timestamp","_"+deviceName+"AboutToFail","_"+deviceName+"RemainingUsefulLife"), "outer")
-        println("Joined lagging features:")
+        println("Updated lagging features:")
         lag_vars.orderBy(desc("timestamp")).show()
         // persist lagging features to MapR-DB
         lag_vars.write.option("Operation", "Update").saveToMapRDB(tableName)
