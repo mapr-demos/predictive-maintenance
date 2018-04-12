@@ -11,15 +11,30 @@ import org.apache.spark.sql.SparkSession
 import com.mapr.db.spark.sql._
 import org.apache.spark.sql.functions._
 
-/*
+/******************************************************************************
+  PURPOSE:
 
-PURPOSE: Save all metrics to a mapr-db table. Delimit multiple streams by a comma in the first command-line arg
-USAGE:
+  Save all metrics from an MQTT dataset to a MapR-DB table.
+
+  BUILD:
+
   `mvn package`
-  copy the uber jar to your cluster
-  java -cp factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.MqttConsumer /apps/mystream:mytopic1[,/apps/mystream:mytopic2] /apps/mytable
+  copy target/lib to your cluster
 
-*/
+  SYNTHESIZE DATA:
+
+  cat sample_dataset/mqtt.json | while read line; do echo $line | sed 's/{/{"timestamp":"'$(date +%s)'",/g' | /opt/mapr/kafka/kafka-0.9.0/bin/kafka-console-producer.sh --topic /apps/mqtt:opto22 --broker-list this.will.be.ignored:9092; echo -n "."; done
+
+  RUN:
+
+  java -cp target/factory-iot-tutorial-1.0.jar:target/lib/\* com.mapr.examples.MqttConsumer <stream:topic>[,<stream2:topic2>] <tableName>
+
+  EXAMPLE:
+
+  java -cp target/factory-iot-tutorial-1.0.jar:target/lib/\* com.mapr.examples.MqttConsumer /apps/mqtt:opto22 /tmp/iantest
+
+  ****************************************************************************/
+
 object MqttConsumer {
 
   case class MqttRecord(timestamp: String,
@@ -413,21 +428,21 @@ object MqttConsumer {
         // Derive datetime features
 
         val ds4 = ds3.select($"*", unix_timestamp($"timestamp", "s").cast(TimestampType).as("unix_time"))
-          .selectExpr("*", "to_date(unix_time) as date_value")
-          .withColumn("date_key",expr("date_format(date_value, 'YYYYMMdd')"))
-          .withColumn("year_key", year(from_unixtime(col("timestamp"))))
-          .withColumn("quarter_of_year", quarter(from_unixtime(col("timestamp"))))
-          .selectExpr("*", s"concat('Q', quarter_of_year) as quarter_short")
-          .withColumn("month_of_year", month(from_unixtime(col("timestamp"))))
-          .withColumn("day_number_of_week", from_unixtime(col("timestamp"), "u").cast("Int"))
-          .selectExpr("*", """CASE WHEN day_number_of_week > 5 THEN true ELSE false END as weekend""")
-          .withColumn("day_of_week_long", from_unixtime(col("timestamp"), "EEEEEEEEE"))
-          .withColumn("month_long", from_unixtime(col("timestamp"), "MMMMMMMM"))
-          .withColumn("week_key",expr("date_format(date_value, 'ww')"))
+          .selectExpr("*", "to_date(unix_time) as _date_value")
+          .withColumn("_date_key",expr("date_format(_date_value, 'YYYYMMdd')"))
+          .withColumn("_year_key", year(from_unixtime(col("timestamp"))))
+          .withColumn("_quarter_of_year", quarter(from_unixtime(col("timestamp"))))
+          .selectExpr("*", s"concat('Q', _quarter_of_year) as quarter_short")
+          .withColumn("_month_of_year", month(from_unixtime(col("timestamp"))))
+          .withColumn("_day_number_of_week", from_unixtime(col("timestamp"), "u").cast("Int"))
+          .selectExpr("*", """CASE WHEN _day_number_of_week > 5 THEN true ELSE false END as _weekend""")
+          .withColumn("_day_of_week_long", from_unixtime(col("timestamp"), "EEEEEEEEE"))
+          .withColumn("_month_long", from_unixtime(col("timestamp"), "MMMMMMMM"))
+          .withColumn("_week_key",expr("date_format(_date_value, 'ww')"))
 
         // We can't persist TimestampType fields because that can't be converted to OJAI types
         // so just select the fields that are primitive string or number types
-        val ds5 = ds3.join(ds4.select("timestamp","year_key","week_key","month_of_year","month_long","day_number_of_week","day_of_week_long","weekend","quarter_of_year","quarter_short"), Seq("timestamp"))
+        val ds5 = ds3.join(ds4.select("timestamp","_year_key","_week_key","_month_of_year","_month_long","_day_number_of_week","_day_of_week_long","_weekend","_quarter_of_year","_quarter_short"), Seq("timestamp"))
         ds5.printSchema()
 
         try{

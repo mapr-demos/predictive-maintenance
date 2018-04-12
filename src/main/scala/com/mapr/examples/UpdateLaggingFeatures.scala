@@ -14,16 +14,27 @@ import com.mapr.db.spark._
 import com.mapr.db.spark.field
 
 
-/*
+/******************************************************************************
+  PURPOSE: Receive timestamps and device name from a stream, indicating when and where failures have occurred. Upon failure, this program will update all the lagging features corresponding to the failed device.
 
-PURPOSE: Receive timestamps and device name from a stream, indicating when and where failures have occurred. Upon failure, this program will update all the lagging features corresponding to the failed device.
-USAGE:
-  `mvn package`
-  copy the uber jar to your cluster
-  echo "{\"timestamp\":"$(date +%s)",\"deviceName\":\"Chiller1\"}" | /opt/mapr/kafka/kafka-0.9.0/bin/kafka-console-producer.sh --topic /apps/mqtt:failure --broker-list this.will.be.ignored:9092
-  java -cp factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.UpdateLaggingFeatures /apps/mqtt:failure /tmp/iantest
+  BUILD:
+    `mvn package`
+    copy target/lib to your cluster
 
-*/
+  SYNTHESIZE DATA:
+
+    echo "{\"timestamp\":"$(date +%s)",\"deviceName\":\"Chiller1\"}" | /opt/mapr/kafka/kafka-0.9.0/bin/kafka-console-producer.sh --topic /apps/mqtt:failure --broker-list this.will.be.ignored:9092
+
+  RUN:
+
+  java -cp target/factory-iot-tutorial-1.0.jar:target/lib/\* com.mapr.examples.UpdateLaggingFeatures <stream:topic> <tableName>
+
+  EXAMPLE:
+
+  java -cp target/factory-iot-tutorial-1.0.jar:target/lib/\* com.mapr.examples.UpdateLaggingFeatures /apps/mqtt:failures /tmp/iantest
+
+  ****************************************************************************/
+
 object UpdateLaggingFeatures {
 
   case class FailureEvent(timestamp: String,
