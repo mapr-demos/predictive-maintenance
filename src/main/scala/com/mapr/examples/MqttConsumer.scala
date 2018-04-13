@@ -31,7 +31,7 @@ import org.apache.spark.sql.functions._
 
   EXAMPLE:
 
-  java -cp target/factory-iot-tutorial-1.0.jar:target/lib/\* com.mapr.examples.MqttConsumer /apps/mqtt:opto22 /tmp/iantest
+  java -cp target/factory-iot-tutorial-1.0.jar:target/lib/\* com.mapr.examples.MqttConsumer /apps/mqtt:opto22 /apps/mqtt_records
 
   ****************************************************************************/
 
@@ -371,7 +371,7 @@ object MqttConsumer {
       ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG ->
         "org.apache.kafka.common.serialization.StringDeserializer",
       ConsumerConfig.AUTO_OFFSET_RESET_CONFIG -> offsetReset,
-      ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG -> "false",
+      ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG -> "true",
       "spark.kafka.poll.time" -> pollTimeout
     )
 
@@ -424,36 +424,37 @@ object MqttConsumer {
           .withColumn("_Boiler1RemainingUsefulLife", lit("0"))
           .withColumn("_Boiler2AboutToFail", lit("false"))
           .withColumn("_Boiler2RemainingUsefulLife", lit("0"))
-
-        // Derive datetime features
-
-        val ds4 = ds3.select($"*", unix_timestamp($"timestamp", "s").cast(TimestampType).as("unix_time"))
-          .selectExpr("*", "to_date(unix_time) as _date_value")
-          .withColumn("_date_key",expr("date_format(_date_value, 'YYYYMMdd')"))
+//          .select($"*", unix_timestamp($"timestamp", "s").as("unix_time"))
+//          .selectExpr("*", "to_date(unix_time) as _date_value")
+//          .withColumn("_date_key",expr("date_format(_date_value, 'YYYYMMdd')"))
           .withColumn("_year_key", year(from_unixtime(col("timestamp"))))
           .withColumn("_quarter_of_year", quarter(from_unixtime(col("timestamp"))))
-          .selectExpr("*", s"concat('Q', _quarter_of_year) as quarter_short")
+          .selectExpr("*", s"concat('Q', _quarter_of_year) as _quarter_short")
           .withColumn("_month_of_year", month(from_unixtime(col("timestamp"))))
           .withColumn("_day_number_of_week", from_unixtime(col("timestamp"), "u").cast("Int"))
           .selectExpr("*", """CASE WHEN _day_number_of_week > 5 THEN true ELSE false END as _weekend""")
           .withColumn("_day_of_week_long", from_unixtime(col("timestamp"), "EEEEEEEEE"))
           .withColumn("_month_long", from_unixtime(col("timestamp"), "MMMMMMMM"))
-          .withColumn("_week_key",expr("date_format(_date_value, 'ww')"))
+//          .withColumn("_week_key",expr("date_format(_date_value, 'ww')"))
 
-        // We can't persist TimestampType fields because that can't be converted to OJAI types
-        // so just select the fields that are primitive string or number types
-        val ds5 = ds3.join(ds4.select("timestamp","_year_key","_week_key","_month_of_year","_month_long","_day_number_of_week","_day_of_week_long","_weekend","_quarter_of_year","_quarter_short"), Seq("timestamp"))
-        ds5.printSchema()
+        // Select only fields that are primitive string or number types for saving to MapR-DB.
+        // Note, you can't persist the TimestampType field because it can't be converted an OJAI type
+//        val ds5 = ds3.join(ds4.select("timestamp","_year_key","_week_key","_month_of_year","_month_long","_day_number_of_week","_day_of_week_long","_weekend","_quarter_of_year","_quarter_short"), Seq("timestamp"))
 
+        println("Trying to persist " + ds3.count() + " new records to table " + args(1))
         try{
-          ds5.saveToMapRDB(tableName = args(1), idFieldPath = "timestamp", createTable = false)
+          ds3.saveToMapRDB(tableName = args(1), idFieldPath = "timestamp", createTable = false)
         } catch {
           case e: com.mapr.db.exceptions.TableNotFoundException =>
-            ds5.saveToMapRDB(tableName = args(1), idFieldPath = "timestamp", createTable = true)
+            ds3.saveToMapRDB(tableName = args(1), idFieldPath = "timestamp", createTable = true)
         }
 
         //        df.createOrReplaceTempView("mqtt_snapshot")
-//        spark.sql("select count(*) from mqtt_snapshot").show
+        val mqtt_rdd = spark.loadFromMapRDB(args(1))
+        println ("Number of rows in table " + args(1) + ":")
+        println(mqtt_rdd.count)
+
+//        spark.sql("select count(*) from " +  args(1)).show
       }
     }
 

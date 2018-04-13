@@ -27,7 +27,7 @@ import breeze.signal._
 
   SYNTHESIZE DATA:
 
-  java -cp target/factory-iot-tutorial-1.0-jar-with-dependencies.j com.mapr.examples.HighSpeedProducer /apps/mqtt:vibration 10
+  java -cp target/factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.HighSpeedProducer /apps/mqtt:vibrations 10
 
   RUN:
 
@@ -35,7 +35,7 @@ import breeze.signal._
 
   EXAMPLE:
 
-  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/mqtt:vibration 25.0
+  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/mqtt:vibrations 25.0
 
   ****************************************************************************/
 
