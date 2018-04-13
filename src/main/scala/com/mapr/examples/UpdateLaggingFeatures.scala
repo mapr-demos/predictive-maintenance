@@ -23,7 +23,7 @@ import com.mapr.db.spark.field
 
   SYNTHESIZE DATA:
 
-    echo "{\"timestamp\":"$(date +%s)",\"deviceName\":\"Chiller1\"}" | /opt/mapr/kafka/kafka-0.9.0/bin/kafka-console-producer.sh --topic /apps/mqtt:failure --broker-list this.will.be.ignored:9092
+    echo "{\"timestamp\":"$(date +%s)",\"deviceName\":\"Chiller1\"}" | /opt/mapr/kafka/kafka-0.9.0/bin/kafka-console-producer.sh --topic /apps/mqtt:failures --broker-list this.will.be.ignored:9092
 
   RUN:
 
@@ -31,7 +31,7 @@ import com.mapr.db.spark.field
 
   EXAMPLE:
 
-  java -cp target/factory-iot-tutorial-1.0.jar:target/lib/\* com.mapr.examples.UpdateLaggingFeatures /apps/mqtt:failures /tmp/iantest
+  java -cp target/factory-iot-tutorial-1.0.jar:target/lib/\* com.mapr.examples.UpdateLaggingFeatures /apps/mqtt:failures /apps/mqtt_records
 
   ****************************************************************************/
 
@@ -130,7 +130,7 @@ object UpdateLaggingFeatures {
         val mqtt_df = mqtt_rdd.toDF()
         // "AboutToFail" is a binary lagging feature intended to be used to classify whether failure is imminent
         val binary_lagging_feature = mqtt_df.filter(mqtt_df("timestamp") >= failure_imminent and mqtt_df("timestamp") <= failure_time)
-           .select("_id","timestamp", "_"+deviceName+"RemainingUsefulLife")
+//           .select("_id","timestamp", "_"+deviceName+"RemainingUsefulLife")
            .withColumn("_"+deviceName+"AboutToFail", lit("true"))
 
 //        println("Binary lagging feature:")
@@ -141,14 +141,15 @@ object UpdateLaggingFeatures {
             .filter(mqtt_df("timestamp") < failure_imminent and
               mqtt_df("_"+deviceName+"AboutToFail") === lit("false") and
               mqtt_df("_"+deviceName+"RemainingUsefulLife") === lit(0))
-            .select("_id","timestamp","_"+deviceName+"AboutToFail")
+//            .select("_id","timestamp","_"+deviceName+"AboutToFail")
             .withColumn("_"+deviceName+"RemainingUsefulLife", lit(failure_imminent.toInt)-mqtt_df.col("timestamp"))
 
 //        println("Continuous lagging feature:")
 //        continuous_lagging_feature.orderBy(desc("timestamp")).show()
 
         // combine the two lagging features
-        val lag_vars = binary_lagging_feature.join(continuous_lagging_feature, Seq("_id","timestamp","_"+deviceName+"AboutToFail","_"+deviceName+"RemainingUsefulLife"), "outer")
+//        val lag_vars = binary_lagging_feature.join(continuous_lagging_feature, Seq("_id","timestamp","_"+deviceName+"AboutToFail","_"+deviceName+"RemainingUsefulLife"), "outer")
+        val lag_vars = continuous_lagging_feature.union(binary_lagging_feature)
         println("Updated lagging features:")
         lag_vars.orderBy(desc("timestamp")).show()
         // persist lagging features to MapR-DB
