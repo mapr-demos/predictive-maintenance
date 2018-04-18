@@ -27,7 +27,7 @@ import breeze.signal._
 
   SYNTHESIZE DATA:
 
-  java -cp target/factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.HighSpeedProducer /apps/mqtt:vibrations 10
+  java -cp target/factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.HighSpeedProducer /apps/fastdata:vibrations 10
 
   RUN:
 
@@ -35,7 +35,7 @@ import breeze.signal._
 
   EXAMPLE:
 
-  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/mqtt:vibrations 25.0
+  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibrations 25.0
 
   ****************************************************************************/
 
@@ -46,7 +46,7 @@ object StreamingFourierTransform {
   def main(args: Array[String]): Unit = {
     if (args.length < 1) {
       System.err.println("USAGE: StreamingFourierTransform <stream:topic> [deviation_threshold]")
-      System.err.println("EXAMPLE: spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/mqtt:vibration 25.0")
+      System.err.println("EXAMPLE: spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibration 25.0")
       System.exit(1)
     }
     println("Waiting for messages on stream " + args(0) + "...")
@@ -54,13 +54,13 @@ object StreamingFourierTransform {
     if (args.length > 1) {
       deviation_tolerance = args(1).toDouble
     }
-    println("Alerting when FFT signal changes more than " + deviation_tolerance + "%")
+    println("Alerting when FFT similarity changes more than " + deviation_tolerance + "%")
     val schema = StructType(Array(
       StructField("t", DoubleType, nullable = true),
       StructField("amplitude", DoubleType, nullable = true)
     ))
     val groupId = "testgroup"
-    val offsetReset = "earliest"  //  "latest"
+    val offsetReset = "latest"  //  "earliest"
     val pollTimeout = "5000"
     val brokers = "this.will.be.ignored:9092" // not needed for MapR Streams, needed for Kafka
     val sparkConf = new SparkConf()
@@ -89,12 +89,16 @@ object StreamingFourierTransform {
     val valuesDStream = messagesDStream.map(_.value())
     // Initialize FFT comparison
     var b = breeze.linalg.DenseVector[Double]()
+    var msg_counter: Long = 0
+    var t0 = System.nanoTime()
     valuesDStream.foreachRDD { (rdd: RDD[String]) =>
       if (!rdd.isEmpty) {
         val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
         import spark.implicits._
         val ds: Dataset[Signal] = spark.read.schema(schema).json(rdd).as[Signal]
-        println("Number of samples received: " + ds.count())
+        val throughput: Double = ds.count().toDouble / ((System.nanoTime() - t0) / 1000000000d)
+        msg_counter += ds.count()
+        t0 = System.nanoTime()
         val required_sample_size = 600
         // Consequtive RDDs may be out of phase, so just take the last 600 and sort them
         // so we're always taking FFTs on consistent representations of the time-domain signal
@@ -118,7 +122,7 @@ object StreamingFourierTransform {
             val cosine_similarity = math.abs((a dot b) / math.sqrt((a dot a) * (b dot b)))
             val fft_change = 100d-cosine_similarity*100d
             //            println(f"FFT similarity: $cosine_similarity%2.2f")
-            println(f"Vibration signal has changed by $fft_change%2.2f%%")
+            println(f"Consumer throughput = $throughput%2.0f msgs/sec. Message count = $msg_counter. Rolling FFT similarity = $fft_change%2.2f%%")
             if (fft_change > deviation_tolerance)
               println("<---------- SIMULATING FAILURE EVENT ---------->")
           }

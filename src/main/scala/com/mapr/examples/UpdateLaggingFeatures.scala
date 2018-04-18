@@ -155,6 +155,7 @@ object UpdateLaggingFeatures {
         // persist lagging features to MapR-DB
         lag_vars.write.option("Operation", "Update").saveToMapRDB(tableName)
 
+
         // print a summary of the records which have been updated
 //        sc.loadFromMapRDB(tableName).where(field("timestamp") >= failure_imminent and field("timestamp") <= failure_time).select("timestamp","OutsideAirTemp","_"+deviceName+"AboutToFail")
         val mqtt_df2 = sc.loadFromMapRDB(tableName).toDF()
