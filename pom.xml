@@ -112,11 +112,6 @@
             <artifactId>breeze_2.12</artifactId>
             <version>0.13.2</version>
         </dependency>
-        <dependency>
-            <groupId>org.scalanlp</groupId>
-            <artifactId>breeze_2.12</artifactId>
-            <version>0.13.2</version>
-        </dependency>
     </dependencies>
 
     <build>
