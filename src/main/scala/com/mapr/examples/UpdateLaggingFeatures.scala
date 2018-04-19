@@ -27,11 +27,11 @@ import com.mapr.db.spark.field
 
   RUN:
 
-  java -cp target/factory-iot-tutorial-1.0.jar:target/lib/\* com.mapr.examples.UpdateLaggingFeatures <stream:topic> <tableName>
+ /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures target/factory-iot-tutorial-1.0-jar-with-dependencies.jar <stream:topic>[,<stream2:topic2>] <tableName>
 
   EXAMPLE:
 
-  java -cp target/factory-iot-tutorial-1.0.jar:target/lib/\* com.mapr.examples.UpdateLaggingFeatures /apps/mqtt:failures /apps/mqtt_records
+  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/mqtt:failures /apps/mqtt_records
 
   ****************************************************************************/
 
@@ -150,8 +150,7 @@ object UpdateLaggingFeatures {
         // combine the two lagging features
 //        val lag_vars = binary_lagging_feature.join(continuous_lagging_feature, Seq("_id","timestamp","_"+deviceName+"AboutToFail","_"+deviceName+"RemainingUsefulLife"), "outer")
         val lag_vars = continuous_lagging_feature.union(binary_lagging_feature)
-        println("Updated lagging features:")
-        lag_vars.orderBy(desc("timestamp")).show()
+//        lag_vars.orderBy(desc("timestamp")).show()
         // persist lagging features to MapR-DB
         lag_vars.write.option("Operation", "Update").saveToMapRDB(tableName)
 
