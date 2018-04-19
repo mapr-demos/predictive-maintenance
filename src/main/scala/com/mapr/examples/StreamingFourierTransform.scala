@@ -12,7 +12,12 @@ import org.apache.spark.streaming.kafka09.{ConsumerStrategies, KafkaUtils, Locat
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import breeze.linalg.{DenseVector, norm}
 import breeze.signal._
-
+import java.io.BufferedReader
+import java.io.DataOutputStream
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
+import javax.net.ssl.HttpsURLConnection
 
 /******************************************************************************
   PURPOSE:
@@ -123,8 +128,11 @@ object StreamingFourierTransform {
             val fft_change = 100d-cosine_similarity*100d
             //            println(f"FFT similarity: $cosine_similarity%2.2f")
             println(f"Consumer throughput = $throughput%2.0f msgs/sec. Message count = $msg_counter. Rolling FFT similarity = $fft_change%2.2f%%")
-            if (fft_change > deviation_tolerance)
+            if (fft_change > deviation_tolerance) {
               println("<---------- SIMULATING FAILURE EVENT ---------->")
+              NotfyGrafana()
+            }
+
           }
           // Save this FFT so we can measure rate of change for the next RDD.
           b = a
@@ -134,6 +142,31 @@ object StreamingFourierTransform {
     ssc.start()
     ssc.awaitTermination()
     ssc.stop(stopSparkContext = true, stopGracefully = true)
+  }
+
+  // HTTP POST request
+  @throws[Exception]
+  private def NotfyGrafana(): Unit = {
+    val USER_AGENT = "Mozilla/5.0"
+    val url = "http://localhost:3000/api/annotations"
+    val obj = new URL(url)
+    val con = obj.openConnection.asInstanceOf[HttpsURLConnection]
+    //add reuqest header
+    con.setRequestMethod("POST")
+    con.setRequestProperty("User-Agent", USER_AGENT)
+    con.setRequestProperty("Accept-Language", "en-US,en;q=0.5")
+    val unixTime = System.currentTimeMillis
+    val urlParameters = "time=" + unixTime + "&title=anomaly detected&tag=HighSpeedProducer"
+    // Send post request
+    con.setDoOutput(true)
+    val wr = new DataOutputStream(con.getOutputStream)
+    wr.writeBytes(urlParameters)
+    wr.flush()
+    wr.close()
+    val responseCode = con.getResponseCode
+    System.out.println("\nSending 'POST' request to URL : " + url)
+    System.out.println("Post parameters : " + urlParameters)
+    System.out.println("Response Code : " + responseCode)
   }
 
 }

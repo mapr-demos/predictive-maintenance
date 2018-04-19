@@ -105,7 +105,7 @@ Update `localhost` with the hostname of the node running OpenTSDB.
 ## STEP 4 - Update lagging features in MapR-DB for each failure event:
 
 ```
-java -cp target/factory-iot-tutorial-1.0.jar:target/lib/* com.mapr.examples.UpdateLaggingFeatures /apps/mqtt:failures /apps/mqtt_records
+/opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/mqtt:failures /apps/mqtt_records
 ```
 
 ## STEP 5 - Simulate a failure event:
@@ -142,14 +142,14 @@ Here's an example of querying MQTT records table with Drill:
 
 ## STEP 7 - Synthesize a high speed data stream:
 
-This stream simulates time-series amplitudes of a vibration signal.
+This stream simulates time-series amplitudes of a vibration signal, at one sample every 10ms.
 ```
 java -cp target/factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.HighSpeedProducer /apps/fastdata:vibrations 10
 ```
 
 ## STEP 8 - Process high speed data stream:
 
-This will calculate FFTs on-the-fly for the high speed streaming data, and generate an alert when FFTs changed drastically over a rolling window. This simulating anomoly detection for a vibration signal.
+This will calculate FFTs on-the-fly for the high speed streaming data, and generate an alert when FFTs changed more than 25% over a rolling window. This simulating anomaly detection for a vibration signal.
 
 ```
 /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibrations 25.0
