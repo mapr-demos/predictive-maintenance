@@ -12,7 +12,10 @@ import com.mapr.db.spark.sql._
 import org.apache.spark.sql.functions._
 import com.mapr.db.spark._
 import com.mapr.db.spark.field
-
+import java.io.DataOutputStream
+import java.net.HttpURLConnection
+import java.net.URL
+import org.apache.commons.codec.binary.Base64
 
 /******************************************************************************
   PURPOSE: Receive timestamps and device name from a stream, indicating when and where failures have occurred. Upon failure, this program will update all the lagging features corresponding to the failed device.
@@ -27,11 +30,11 @@ import com.mapr.db.spark.field
 
   RUN:
 
- /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures target/factory-iot-tutorial-1.0-jar-with-dependencies.jar <stream:topic>[,<stream2:topic2>] <tableName>
+ /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures target/factory-iot-tutorial-1.0-jar-with-dependencies.jar <stream:topic>[,<stream2:topic2>] <tableName> <Grafana URL>
 
   EXAMPLE:
 
-  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/mqtt:failures /apps/mqtt_records
+  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/mqtt:failures /apps/mqtt_records http://localhost:3000
 
   ****************************************************************************/
 
@@ -41,10 +44,15 @@ object UpdateLaggingFeatures {
                           deviceName: String) extends Serializable
 
   def main(args: Array[String]): Unit = {
-    if (args.length < 2) {
-      System.err.println("Usage: UpdateLaggingFeatures <stream:topic> <table>")
+    if (args.length < 3) {
+      System.err.println("Usage: UpdateLaggingFeatures <stream:topic> <table> <Grafana URL>")
       System.exit(1)
     }
+    val grafana_url = args(2)
+    println("Failures will be annotated on Grafana at " + grafana_url)
+    val topicsSet = args(0).split(",").toSet
+    println("Waiting for messages on stream " + args(0) + "...")
+
     val schema = StructType(Array(
       StructField("timestamp", StringType, nullable = false),
       StructField("deviceName", StringType, nullable = false)
@@ -64,7 +72,6 @@ object UpdateLaggingFeatures {
 
     val sc = ssc.sparkContext
     ssc.sparkContext.setLogLevel("ERROR")
-    val topicsSet = args(0).split(",").toSet
 
     val kafkaParams = Map[String, String](
       ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG -> brokers,
@@ -158,21 +165,48 @@ object UpdateLaggingFeatures {
         // print a summary of the records which have been updated
 //        sc.loadFromMapRDB(tableName).where(field("timestamp") >= failure_imminent and field("timestamp") <= failure_time).select("timestamp","OutsideAirTemp","_"+deviceName+"AboutToFail")
         val mqtt_df2 = sc.loadFromMapRDB(tableName).toDF()
-        println("Current MapR-DB table:")
+        println("Lagging features updated in MapR-DB table:")
         mqtt_df2
           .filter(mqtt_df2("timestamp") <= failure_time)
           .select("timestamp","_"+deviceName+"AboutToFail","_"+deviceName+"RemainingUsefulLife")
           .orderBy(desc("timestamp"))
           .show(rows_to_update.count.toInt+5)
 
-        println("---done---")
+        // send notification to grafana for visualization
+        NotfyGrafana(grafana_url, deviceName)
       }
     }
-
     ssc.start()
     ssc.awaitTermination()
-
     ssc.stop(stopSparkContext = true, stopGracefully = true)
+    println("---done---")
+  }
+
+  // HTTP POST request
+  @throws[Exception]
+  private def NotfyGrafana(grafana_url: String, deviceName: String): Unit = {
+    val USER_AGENT = "Mozilla/5.0"
+    val url = grafana_url + "/api/annotations"
+    val obj = new URL(url)
+    val con = obj.openConnection.asInstanceOf[HttpURLConnection]
+    val user_pass = "admin:admin"
+    val encoded = Base64.encodeBase64String(user_pass.getBytes)
+    con.setRequestProperty("Authorization", "Basic " + encoded)
+    con.setRequestMethod("POST")
+    con.setRequestProperty("User-Agent", USER_AGENT)
+    con.setRequestProperty("Accept", "*/*")
+    val unixTime = System.currentTimeMillis
+    val urlParameters = "&time=" + unixTime + "&title=" + deviceName + " failed&tag=UpdateLaggingFeatures"
+    // Send post request
+    con.setDoOutput(true)
+    val wr = new DataOutputStream(con.getOutputStream)
+    wr.writeBytes(urlParameters)
+    wr.flush()
+    wr.close()
+    val responseCode = con.getResponseCode
+    System.out.println("\nSending 'POST' request to URL : " + url)
+    System.out.println("Post parameters : " + urlParameters)
+    System.out.println("Response Code : " + responseCode)
   }
 
 }

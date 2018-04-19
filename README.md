@@ -96,6 +96,9 @@ cat mqtt.json | while read line; do echo $line | sed 's/{/{"timestamp":"'$(date 
 ```
 
 ## STEP 3 - Save MQTT stream to OpenTSDB:
+
+This process sends the MQTT data stream to OpenTSDB, where it will be loaded by Grafana in a dashboard. 
+
 Update `localhost` with the hostname of the node running OpenTSDB.
 
 ```
@@ -104,8 +107,10 @@ Update `localhost` with the hostname of the node running OpenTSDB.
 
 ## STEP 4 - Update lagging features in MapR-DB for each failure event:
 
+This process will listen for failure events on a MapR Streams topic and retroactively label lagging features in MapR-DB when failures occur, as well as render the failure event in Grafana. Update "http://localhost:3000" with the hostname and port for your Grafana instance.
+
 ```
-/opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/mqtt:failures /apps/mqtt_records
+/opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/mqtt:failures /apps/mqtt_records http://localhost:3000
 ```
 
 ## STEP 5 - Simulate a failure event:
@@ -149,10 +154,10 @@ java -cp target/factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.exam
 
 ## STEP 8 - Process high speed data stream:
 
-This will calculate FFTs on-the-fly for the high speed streaming data, and generate an alert when FFTs changed more than 25% over a rolling window. This simulating anomaly detection for a vibration signal.
+This will calculate FFTs on-the-fly for the high speed streaming data, and render an event in Grafana when FFTs changed more than 25% over a rolling window. This simulates anomaly detection for a vibration signal. Update "http://localhost:3000" with the hostname and port for your Grafana instance.
 
 ```
-/opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibrations 25.0
+/opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibrations 25.0 http://localhost:3000
 ```
 
 ## STEP 10 - Open Jupyter

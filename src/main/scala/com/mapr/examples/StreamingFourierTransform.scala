@@ -12,35 +12,35 @@ import org.apache.spark.streaming.kafka09.{ConsumerStrategies, KafkaUtils, Locat
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import breeze.linalg.{DenseVector, norm}
 import breeze.signal._
-import java.io.BufferedReader
 import java.io.DataOutputStream
-import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
-import javax.net.ssl.HttpsURLConnection
+import org.apache.commons.codec.binary.Base64
+
 
 /******************************************************************************
   PURPOSE:
 
   Calculate Fourier transforms for streaming time-series data. This is intended to demonstrate how to detect anomalies in data from vibration sensors.
 
-  AUTHOR:
   BUILD:
 
-  `mvn package`
+  mvn package
   copy target/lib to your cluster
 
-  SYNTHESIZE DATA:
+  PRELIMINARY:
 
-  java -cp target/factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.HighSpeedProducer /apps/fastdata:vibrations 10
+  Simulate a stream of fast vibration data with this command:
+
+  java -cp target/factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.HighSpeedProducer /apps/fastdata:vibrations 10 http://localhost:3000
 
   RUN:
 
-  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar <stream:topic> [vibration_change_threshold]
+  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar <stream:topic> <vibration_change_threshold> <Grafana URL>
 
   EXAMPLE:
 
-  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibrations 25.0
+  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibrations 25.0 http://localhost:3000
 
   ****************************************************************************/
 
@@ -49,17 +49,17 @@ object StreamingFourierTransform {
   case class Signal(t: Double, amplitude: Double) extends Serializable
 
   def main(args: Array[String]): Unit = {
-    if (args.length < 1) {
+    if (args.length < 2) {
       System.err.println("USAGE: StreamingFourierTransform <stream:topic> [deviation_threshold]")
-      System.err.println("EXAMPLE: spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibration 25.0")
+      System.err.println("EXAMPLE: spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibration 25.0 http://localhost:3000")
       System.exit(1)
     }
-    println("Waiting for messages on stream " + args(0) + "...")
-    var deviation_tolerance = 8.0
-    if (args.length > 1) {
-      deviation_tolerance = args(1).toDouble
-    }
+    val deviation_tolerance = args(1).toDouble
     println("Alerting when FFT similarity changes more than " + deviation_tolerance + "%")
+    val grafana_url = args(2)
+    println("Failures will be annotated on Grafana at " + grafana_url)
+    println("Waiting for messages on stream " + args(0) + "...")
+
     val schema = StructType(Array(
       StructField("t", DoubleType, nullable = true),
       StructField("amplitude", DoubleType, nullable = true)
@@ -130,7 +130,8 @@ object StreamingFourierTransform {
             println(f"Consumer throughput = $throughput%2.0f msgs/sec. Message count = $msg_counter. Rolling FFT similarity = $fft_change%2.2f%%")
             if (fft_change > deviation_tolerance) {
               println("<---------- SIMULATING FAILURE EVENT ---------->")
-              NotfyGrafana()
+              // send notification to grafana for visualization
+              NotfyGrafana(grafana_url)
             }
 
           }
@@ -146,17 +147,19 @@ object StreamingFourierTransform {
 
   // HTTP POST request
   @throws[Exception]
-  private def NotfyGrafana(): Unit = {
+  private def NotfyGrafana(grafana_url: String): Unit = {
     val USER_AGENT = "Mozilla/5.0"
-    val url = "http://localhost:3000/api/annotations"
+    val url = grafana_url + "/api/annotations"
     val obj = new URL(url)
-    val con = obj.openConnection.asInstanceOf[HttpsURLConnection]
-    //add reuqest header
+    val con = obj.openConnection.asInstanceOf[HttpURLConnection]
+    val user_pass = "admin:admin"
+    val encoded = Base64.encodeBase64String(user_pass.getBytes)
+    con.setRequestProperty("Authorization", "Basic " + encoded)
     con.setRequestMethod("POST")
     con.setRequestProperty("User-Agent", USER_AGENT)
-    con.setRequestProperty("Accept-Language", "en-US,en;q=0.5")
+    con.setRequestProperty("Accept", "*/*")
     val unixTime = System.currentTimeMillis
-    val urlParameters = "time=" + unixTime + "&title=anomaly detected&tag=HighSpeedProducer"
+    val urlParameters = "&time=" + unixTime + "&title=Vibration anomaly&tag=HighSpeedProducer"
     // Send post request
     con.setDoOutput(true)
     val wr = new DataOutputStream(con.getOutputStream)
