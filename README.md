@@ -26,25 +26,47 @@ There are two objectives relating to predictive maintenance implemented in this 
 
 ![data flow diagram](/images/dataflow.png?raw=true "Data Flow")
 
-# Usage
+# Preliminary Steps
 
-Download:
+## Install OpenTSDB and Grafana:
+
+Download and install `mapr-grafana`, `mapr-asynchbase`, and `mapr-opentsdb` from []http://artifactory.devops.lab/artifactory/prestage/releases-dev/MEP/](]http://artifactory.devops.lab/artifactory/prestage/releases-dev/MEP/)
+
+```
+yum install mapr-opentsdb -y
+yum install mapr-grafana -y
+```
+
+Enabled write access to opentsdb:
+
+```
+cat /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf | sed "s/#tsd.mode = ro/tsd.mode = rw/g" > /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf.new
+mv /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf.new /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf
+chown mapr:mapr /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf
+```
+
+Start OpenTSDB and Grafana:
+
+```
+/opt/mapr/server/configure.sh -R -OT `hostname -f`
+/opt/mapr/opentsdb/opentsdb-2.4.0/etc/init.d/opentsdb start
+```
+
+Open Grafana data sources, with a URL like [http://maprdemo:3000/datasources/edit/1](http://maprdemo:3000/datasources/edit/1), and add OpenTSDB as a new data source.
+
+## Download tutorial code:
 
 `git clone https://github.com/mapr-demos/factory-iot-tutorial`
 
-Compile:
+## Compile:
 
-`mvn compile`
+```
+mvn compile
+mvn package
+mvn install
+```
 
-Build minimal jar:
-
-`mvn package`
-
-Copy dependencies to target/lib/:
-
-`mvn install`
-
-Create streams:
+## Create streams:
 
 ```
 maprcli stream delete -path /apps/mqtt 
@@ -53,10 +75,13 @@ maprcli stream topic create -path /apps/mqtt -topic opto22 -partitions 1 -json
 maprcli stream topic create -path /apps/mqtt -topic failures -partitions 1 -json
 maprcli stream create -path /apps/fastdata -produceperm p -consumeperm p -topicperm p -ttl 900 -json
 maprcli stream topic create -path /apps/fastdata -topic vibrations -partitions 1 -json
-
 ```
 
-Synthesize mqtt stream:
+# Predictive Maintenance Demo Procedure
+
+## STEP 1 - Synthesize MQTT stream:
+
+This will stream 150 metrics roughly once a second.
 
 ```
 cd sample_dataset
@@ -64,32 +89,32 @@ gunzip mqtt.json.gz
 cat mqtt.json | while read line; do echo $line | sed 's/{/{"timestamp":"'$(date +%s)'",/g' | /opt/mapr/kafka/kafka-0.9.0/bin/kafka-console-producer.sh --topic /apps/mqtt:opto22 --broker-list this.will.be.ignored:9092; echo -n "."; sleep 1; done
 ```
 
-Persist mqtt stream to MapR-DB:
+## STEP 2 - Save MQTT stream to MapR-DB:
 
 ```
-java -cp target/factory-iot-tutorial-1.0.jar:target/lib/* com.mapr.examples.MqttConsumer /apps/mqtt:opto22 /apps/mqtt_records
+/opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.MqttConsumer target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/mqtt:opto22 /apps/mqtt_records
 ```
 
-Persist mqtt stream to OpenTSDB:
+## STEP 3 - Save MQTT stream to OpenTSDB:
+Update `localhost` with the hostname of the node running OpenTSDB.
 
 ```
 /opt/mapr/kafka/kafka-0.9.0/bin/kafka-console-consumer.sh --topic /apps/mqtt:opto22 --new-consumer --bootstrap-server not.applicable:0000 | while read line; do echo $line | jq -r "to_entries | map(\"\(.key) \(.value | tostring)\") | {t: .[0], x: .[]} | .[]" | paste -d ' ' - - | awk '{system("curl -X POST --data \x27{\"metric\": \""$3"\", \"timestamp\": "$2", \"value\": "$4", \"tags\": {\"host\": \"localhost\"}}\x27 http://localhost:4242/api/put")}'; echo -n "."; done
 ```
 
-
-Synthesize failure stream:
-
-```
-echo "{\"timestamp\":"$(date +%s -d '60 sec ago')",\"deviceName\":\"Chiller1\"}" | /opt/mapr/kafka/kafka-0.9.0/bin/kafka-console-producer.sh --topic /apps/mqtt:failures --broker-list this.will.be.ignored:9092
-```
-
-Update Lagging features in mqtt table:
+## STEP 4 - Update lagging features in MapR-DB for each failure event:
 
 ```
 java -cp target/factory-iot-tutorial-1.0.jar:target/lib/* com.mapr.examples.UpdateLaggingFeatures /apps/mqtt:failures /apps/mqtt_records
 ```
 
-Then validate that those lagging features have been updated:
+## STEP 5 - Simulate a failure event:
+
+```
+echo "{\"timestamp\":"$(date +%s -d '60 sec ago')",\"deviceName\":\"Chiller1\"}" | /opt/mapr/kafka/kafka-0.9.0/bin/kafka-console-producer.sh --topic /apps/mqtt:failures --broker-list this.will.be.ignored:9092
+```
+
+## STEP 6 - Validate that lagging features have been updated:
 
 ```
 $ mapr dbshell
@@ -97,7 +122,7 @@ find /apps/mqtt_records --where '{ "$eq" : {"_Chiller1AboutToFail":true} }' --f 
 find /apps/mqtt_records --where '{ "$eq" : {"timestamp":"1523339687"} }' --f _id,_Chiller1AboutToFail,timestamp
 ```
 
-Here are a few examples to validate the database with dbshell:
+Here are a few examples commands to look at that table with `mapr dbshell`:
 
 ```
 $ mapr dbshell
@@ -115,14 +140,20 @@ Here's an example of querying MQTT records table with Drill:
 ```
 
 
-Synthesize a high speed data stream:
+## STEP 7 - Synthesize a high speed data stream:
 
+This stream simulates time-series amplitudes of a vibration signal.
 ```
 java -cp target/factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.HighSpeedProducer /apps/fastdata:vibrations 10
 ```
 
-Process high speed data stream:
+## STEP 8 - Process high speed data stream:
+
+This will calculate FFTs on-the-fly for the high speed streaming data, and generate an alert when FFTs changed drastically over a rolling window. This simulating anomoly detection for a vibration signal.
 
 ```
 /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibrations 25.0
 ```
+
+## STEP 10 - Open Jupyter
+Open notebooks to see how Drill can be used to load MapR-DB data into notebooks for Deep Learning with Tensorflow.
