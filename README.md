@@ -1,5 +1,5 @@
 
-# How to use MapR for Predictive Maintenance Applications
+# MapR for Predictive Maintenance
 
 This project is intended to show how to build Predictive Maintenance applications on MapR. Predictive Maintenance applications place high demands on data streaming, time-series data storage, and machine learning. Therefore, this project focuses on data ingest with MapR Streams, time-series data storage with MapR-DB and OpenTSDB, and feature engineering with MapR-DB and Apache Spark.
 
@@ -13,7 +13,7 @@ The "predictive" aspects of Predictive Maintenance applications are usually real
 
 In summary:
 
-* MapR Streams provide a convenient way to ingest IoT data, which is often sampled frequently, and never ends. (i.e. it's a stream)
+* MapR Streams provide a convenient way to ingest IoT data because it is scalable and provides convenient interfaces.
 * The integration of MapR DB with Spark provides a convenient way to label lagging features needed for predicting failures via supervised Machine Learning.
 * Drill provides a convenient way to load ML data sets into Tensorflow for unsupervised and supervised machine learning
 
@@ -59,6 +59,8 @@ maprcli stream topic create -path /apps/fastdata -topic vibrations -partitions 1
 Synthesize mqtt stream:
 
 ```
+cd sample_dataset
+gunzip mqtt.json.gz
 cat mqtt.json | while read line; do echo $line | sed 's/{/{"timestamp":"'$(date +%s)'",/g' | /opt/mapr/kafka/kafka-0.9.0/bin/kafka-console-producer.sh --topic /apps/mqtt:opto22 --broker-list this.will.be.ignored:9092; echo -n "."; sleep 1; done
 ```
 
@@ -69,7 +71,10 @@ java -cp target/factory-iot-tutorial-1.0.jar:target/lib/* com.mapr.examples.Mqtt
 ```
 
 Persist mqtt stream to OpenTSDB:
+
+```
 /opt/mapr/kafka/kafka-0.9.0/bin/kafka-console-consumer.sh --topic /apps/mqtt:opto22 --new-consumer --bootstrap-server not.applicable:0000 | while read line; do echo $line | jq -r "to_entries | map(\"\(.key) \(.value | tostring)\") | {t: .[0], x: .[]} | .[]" | paste -d ' ' - - | awk '{system("curl -X POST --data \x27{\"metric\": \""$3"\", \"timestamp\": "$2", \"value\": "$4", \"tags\": {\"host\": \"localhost\"}}\x27 http://localhost:4242/api/put")}'; echo -n "."; done
+```
 
 
 Synthesize failure stream:
