@@ -27,11 +27,11 @@ import org.apache.spark.sql.functions._
 
   RUN:
 
-  java -cp target/factory-iot-tutorial-1.0.jar:target/lib/\* com.mapr.examples.MqttConsumer <stream:topic>[,<stream2:topic2>] <tableName>
+  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.MqttConsumer target/factory-iot-tutorial-1.0-jar-with-dependencies.jar <stream:topic>[,<stream2:topic2>] <tableName>
 
   EXAMPLE:
 
-  java -cp target/factory-iot-tutorial-1.0.jar:target/lib/\* com.mapr.examples.MqttConsumer /apps/mqtt:opto22 /apps/mqtt_records
+  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.MqttConsumer target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/mqtt:opto22 /apps/mqtt_records
 
   ****************************************************************************/
 
@@ -386,7 +386,7 @@ object MqttConsumer {
       // There exists at least one element in RDD
       if (!rdd.isEmpty) {
         val count = rdd.count
-        println("messages received on "+args(0)+": " + count)
+        println("Messages consumed from stream "+args(0)+": " + count)
         val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
         import spark.implicits._
         val ds: Dataset[MqttRecord] = spark.read.schema(schema).json(rdd).as[MqttRecord]
@@ -441,7 +441,7 @@ object MqttConsumer {
         // Note, you can't persist the TimestampType field because it can't be converted an OJAI type
 //        val ds5 = ds3.join(ds4.select("timestamp","_year_key","_week_key","_month_of_year","_month_long","_day_number_of_week","_day_of_week_long","_weekend","_quarter_of_year","_quarter_short"), Seq("timestamp"))
 
-        println("Trying to persist " + ds3.count() + " new records to table " + args(1))
+        println("Saving " + ds3.count() + " new records to table " + args(1))
         try{
           ds3.saveToMapRDB(tableName = args(1), idFieldPath = "timestamp", createTable = false)
         } catch {
@@ -451,8 +451,7 @@ object MqttConsumer {
 
         //        df.createOrReplaceTempView("mqtt_snapshot")
         val mqtt_rdd = spark.loadFromMapRDB(args(1))
-        println ("Number of rows in table " + args(1) + ":")
-        println(mqtt_rdd.count)
+        println("Number of rows in table " + args(1) + ": " + mqtt_rdd.count)
 
 //        spark.sql("select count(*) from " +  args(1)).show
       }
