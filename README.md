@@ -160,5 +160,11 @@ This will calculate FFTs on-the-fly for the high speed streaming data, and rende
 /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibrations 25.0 http://localhost:3000
 ```
 
+## STEP 9 - Visualize data in Grafana
+
+By now you should be able to see streaming MQTT data, vibration faults, and device failures in the Grafana dashboard.
+
+![grafana dashboard](/images/grafana_screenshot.png?raw=true "Grafana Dashboard")
+
 ## STEP 10 - Open Jupyter
 Open notebooks to see how Drill can be used to load MapR-DB data into notebooks for Deep Learning with Tensorflow.
