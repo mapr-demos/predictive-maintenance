@@ -380,6 +380,8 @@ object MqttConsumer {
       ssc, LocationStrategies.PreferConsistent, consumerStrategy
     )
 
+    println("Waiting for messages on stream " + args(0) + "...")
+
     val valuesDStream = messagesDStream.map(_.value())
 
     valuesDStream.foreachRDD { (rdd: RDD[String], time: Time) =>
