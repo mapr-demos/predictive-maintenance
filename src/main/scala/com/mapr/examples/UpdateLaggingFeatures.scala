@@ -173,7 +173,7 @@ object UpdateLaggingFeatures {
           .show(rows_to_update.count.toInt+5)
 
         // send notification to grafana for visualization
-        NotfyGrafana(grafana_url, deviceName)
+        NotfyGrafana(grafana_url, "Failure event", deviceName + " failed")
       }
     }
     ssc.start()
@@ -184,7 +184,7 @@ object UpdateLaggingFeatures {
 
   // HTTP POST request
   @throws[Exception]
-  private def NotfyGrafana(grafana_url: String, deviceName: String): Unit = {
+  private def NotfyGrafana(grafana_url: String, title: String, text: String): Unit = {
     val USER_AGENT = "Mozilla/5.0"
     val url = grafana_url + "/api/annotations"
     val obj = new URL(url)
@@ -196,7 +196,7 @@ object UpdateLaggingFeatures {
     con.setRequestProperty("User-Agent", USER_AGENT)
     con.setRequestProperty("Accept", "*/*")
     val unixTime = System.currentTimeMillis
-    val urlParameters = "&time=" + unixTime + "&title=" + deviceName + " failed&tag=UpdateLaggingFeatures"
+    val urlParameters = "&time=" + unixTime + "&title=" + title + "&text=" + text + "&tag=UpdateLaggingFeatures"
     // Send post request
     con.setDoOutput(true)
     val wr = new DataOutputStream(con.getOutputStream)

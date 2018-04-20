@@ -131,7 +131,7 @@ object StreamingFourierTransform {
             if (fft_change > deviation_tolerance) {
               println("<---------- SIMULATING FAILURE EVENT ---------->")
               // send notification to grafana for visualization
-              NotfyGrafana(grafana_url)
+              NotfyGrafana(grafana_url, "Anomoly Detected", "Vibration fluctuated by " + fft_change + "%")
             }
 
           }
@@ -147,7 +147,7 @@ object StreamingFourierTransform {
 
   // HTTP POST request
   @throws[Exception]
-  private def NotfyGrafana(grafana_url: String): Unit = {
+  private def NotfyGrafana(grafana_url: String, title: String, text: String): Unit = {
     val USER_AGENT = "Mozilla/5.0"
     val url = grafana_url + "/api/annotations"
     val obj = new URL(url)
@@ -159,7 +159,7 @@ object StreamingFourierTransform {
     con.setRequestProperty("User-Agent", USER_AGENT)
     con.setRequestProperty("Accept", "*/*")
     val unixTime = System.currentTimeMillis
-    val urlParameters = "&time=" + unixTime + "&title=Vibration anomaly&tag=HighSpeedProducer"
+    val urlParameters = "&time=" + unixTime + "&title=" + title + "&text=" + text + "&tag=HighSpeedProducer"
     // Send post request
     con.setDoOutput(true)
     val wr = new DataOutputStream(con.getOutputStream)
