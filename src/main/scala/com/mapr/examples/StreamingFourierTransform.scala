@@ -131,7 +131,7 @@ object StreamingFourierTransform {
             if (fft_change > deviation_tolerance) {
               println("<---------- SIMULATING FAILURE EVENT ---------->")
               // send notification to grafana for visualization
-              NotfyGrafana(grafana_url, "Anomoly Detected", "Vibration fluctuated by " + fft_change + "%")
+              NotfyGrafana(grafana_url, "Anomaly Detected", "Vibration fluctuated by " + (fft_change).toInt.toString + " percent")
             }
 
           }
