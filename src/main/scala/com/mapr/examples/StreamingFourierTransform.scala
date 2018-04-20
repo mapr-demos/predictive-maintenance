@@ -167,9 +167,8 @@ object StreamingFourierTransform {
     wr.flush()
     wr.close()
     val responseCode = con.getResponseCode
-    System.out.println("\nSending 'POST' request to URL : " + url)
-    System.out.println("Post parameters : " + urlParameters)
-    System.out.println("Response Code : " + responseCode)
+    System.out.println("\nSending fault notification to Grafana: " + url)
+    System.out.println("Response Code: " + responseCode)
   }
 
 }

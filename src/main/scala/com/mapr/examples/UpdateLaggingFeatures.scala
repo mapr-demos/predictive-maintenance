@@ -116,13 +116,11 @@ object UpdateLaggingFeatures {
         // Load the MQTT data table from MapR-DB JSON
         // The table schema will be inferred when we loadFromMapRDB:
         val mqtt_rdd = sc.loadFromMapRDB(tableName)
+        val mqtt_df = mqtt_rdd.toDF()
 
         // We can select rows and filter on that RDD as shown below:
-        println("Total number of records in table " + tableName + ":")
-        println(mqtt_rdd.map(a => {a.timestamp}).count)
+        println("Total number of records in table " + tableName + ": " + mqtt_rdd.map(a => {a.timestamp}).count)
 //        println(ds.filter(a => {a.timestamp >= failure_time}).map(a => {a.timestamp}).count)
-
-        //mqtt_rdd.toDF().rdd.map { row => (row.getAs("timestamp").toString)}.take(3)
 
         // Mark the device as "about to fail" for a period of time leading up to failure_time
         val failure_window = "20"  // in seconds, to match Unix time given by `date +%s`
@@ -132,13 +130,12 @@ object UpdateLaggingFeatures {
         // https://maprdocs.mapr.com/home/Spark/ScalaDSLforSpecifyingPredicates.html
 
         val rows_to_update = mqtt_rdd.where(field("timestamp") >= failure_imminent and field("timestamp") <= failure_time)
-        println("Number of samples recorded while failure was imminent (from t="+failure_imminent+" to t="+failure_time+")\n" + rows_to_update.count)
-        // another way of doing the same thing:
-        val mqtt_df = mqtt_rdd.toDF()
+        println("_AboutToFail time window (" + failure_window + "s): t="+failure_imminent+" to t="+failure_time)
+
         // "AboutToFail" is a binary lagging feature intended to be used to classify whether failure is imminent
         val binary_lagging_feature = mqtt_df.filter(mqtt_df("timestamp") >= failure_imminent and mqtt_df("timestamp") <= failure_time)
-//           .select("_id","timestamp", "_"+deviceName+"RemainingUsefulLife")
            .withColumn("_"+deviceName+"AboutToFail", lit("true"))
+        println("_AboutToFail records updated: " + binary_lagging_feature.count)
 
 //        println("Binary lagging feature:")
 //        binary_lagging_feature.orderBy(desc("timestamp")).show()
@@ -150,6 +147,7 @@ object UpdateLaggingFeatures {
               mqtt_df("_"+deviceName+"RemainingUsefulLife") === lit(0))
 //            .select("_id","timestamp","_"+deviceName+"AboutToFail")
             .withColumn("_"+deviceName+"RemainingUsefulLife", lit(failure_imminent.toInt)-mqtt_df.col("timestamp"))
+        println("_RemainingUsefulLife records updated: " + continuous_lagging_feature.count)
 
 //        println("Continuous lagging feature:")
 //        continuous_lagging_feature.orderBy(desc("timestamp")).show()
@@ -165,7 +163,7 @@ object UpdateLaggingFeatures {
         // print a summary of the records which have been updated
 //        sc.loadFromMapRDB(tableName).where(field("timestamp") >= failure_imminent and field("timestamp") <= failure_time).select("timestamp","OutsideAirTemp","_"+deviceName+"AboutToFail")
         val mqtt_df2 = sc.loadFromMapRDB(tableName).toDF()
-        println("Lagging features updated in MapR-DB table:")
+        println("Here's an excerpt of the lagging features updated in MapR-DB:")
         mqtt_df2
           .filter(mqtt_df2("timestamp") <= failure_time)
           .select("timestamp","_"+deviceName+"AboutToFail","_"+deviceName+"RemainingUsefulLife")
@@ -204,9 +202,8 @@ object UpdateLaggingFeatures {
     wr.flush()
     wr.close()
     val responseCode = con.getResponseCode
-    System.out.println("\nSending 'POST' request to URL : " + url)
-    System.out.println("Post parameters : " + urlParameters)
-    System.out.println("Response Code : " + responseCode)
+    System.out.println("\nSending fault notification to Grafana: " + url)
+    System.out.println("Response Code: " + responseCode)
   }
 
 }
