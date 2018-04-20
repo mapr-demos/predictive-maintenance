@@ -16,6 +16,7 @@ import java.io.DataOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import org.apache.commons.codec.binary.Base64
+//import org.apache.spark.sql._
 
 /******************************************************************************
   PURPOSE: Receive timestamps and device name from a stream, indicating when and where failures have occurred. Upon failure, this program will update all the lagging features corresponding to the failed device.
@@ -104,9 +105,9 @@ object UpdateLaggingFeatures {
 
         // TODO: iterate on each reported failure, not just the first one.
         // iterate through all the timestamps like this:
-//        ds.select("timestamp").map(r => r.getString(0)).foreach(
-//          println(_)
-//        )
+        //        ds.select("timestamp").map(r => r.getString(0)).foreach(
+        //          println(_)
+        //        )
 
         // get the first failure time:
         val failure_time = ds.select("timestamp").map(r => r.getString(0)).collect()(0).toString()
@@ -120,58 +121,63 @@ object UpdateLaggingFeatures {
 
         // We can select rows and filter on that RDD as shown below:
         println("Total number of records in table " + tableName + ": " + mqtt_rdd.map(a => {a.timestamp}).count)
-//        println(ds.filter(a => {a.timestamp >= failure_time}).map(a => {a.timestamp}).count)
+        //        println(ds.filter(a => {a.timestamp >= failure_time}).map(a => {a.timestamp}).count)
 
         // Mark the device as "about to fail" for a period of time leading up to failure_time
         val failure_window = "20"  // in seconds, to match Unix time given by `date +%s`
         val failure_imminent = (failure_time.toInt - failure_window.toInt).toString
 
-        // For more information about how to specify filter conditions with MapR-DB, see:
-        // https://maprdocs.mapr.com/home/Spark/ScalaDSLforSpecifyingPredicates.html
+        // This try block catches org.apache.spark.sql.AnalysisException errors caused by trying to lookup columns for devices that aren't part of the schema
+        try {
+          // For more information about how to specify filter conditions with MapR-DB, see:
+          // https://maprdocs.mapr.com/home/Spark/ScalaDSLforSpecifyingPredicates.html
+          val rows_to_update = mqtt_rdd.where(field("timestamp") >= failure_imminent and field("timestamp") <= failure_time)
 
-        val rows_to_update = mqtt_rdd.where(field("timestamp") >= failure_imminent and field("timestamp") <= failure_time)
-        println("_AboutToFail time window (" + failure_window + "s): t="+failure_imminent+" to t="+failure_time)
+          // "AboutToFail" is a binary lagging feature intended to be used to classify whether failure is imminent
+          val binary_lagging_feature = mqtt_df.filter(mqtt_df("timestamp") >= failure_imminent and mqtt_df("timestamp") <= failure_time)
+            .withColumn("_" + deviceName + "AboutToFail", lit("true"))
 
-        // "AboutToFail" is a binary lagging feature intended to be used to classify whether failure is imminent
-        val binary_lagging_feature = mqtt_df.filter(mqtt_df("timestamp") >= failure_imminent and mqtt_df("timestamp") <= failure_time)
-           .withColumn("_"+deviceName+"AboutToFail", lit("true"))
-        println("_AboutToFail records updated: " + binary_lagging_feature.count)
+          //        println("Binary lagging feature:")
+          //        binary_lagging_feature.orderBy(desc("timestamp")).show()
 
-//        println("Binary lagging feature:")
-//        binary_lagging_feature.orderBy(desc("timestamp")).show()
-
-        // "RemainingUsefulLife" is a continuous lagging feature, calculated for all values since the last failure event indicated by "About To Fail" == true, and intended to be used to predict how much time is left before the next failure
-        val continuous_lagging_feature = mqtt_df
+          // "RemainingUsefulLife" is a continuous lagging feature, calculated for all values since the last failure event indicated by "About To Fail" == true, and intended to be used to predict how much time is left before the next failure
+          val continuous_lagging_feature = mqtt_df
             .filter(mqtt_df("timestamp") < failure_imminent and
-              mqtt_df("_"+deviceName+"AboutToFail") === lit("false") and
-              mqtt_df("_"+deviceName+"RemainingUsefulLife") === lit(0))
-//            .select("_id","timestamp","_"+deviceName+"AboutToFail")
-            .withColumn("_"+deviceName+"RemainingUsefulLife", lit(failure_imminent.toInt)-mqtt_df.col("timestamp"))
-        println("_RemainingUsefulLife records updated: " + continuous_lagging_feature.count)
+              mqtt_df("_" + deviceName + "AboutToFail") === lit("false") and
+              mqtt_df("_" + deviceName + "RemainingUsefulLife") === lit(0))
+            //            .select("_id","timestamp","_"+deviceName+"AboutToFail")
+            .withColumn("_" + deviceName + "RemainingUsefulLife", lit(failure_imminent.toInt) - mqtt_df.col("timestamp"))
 
-//        println("Continuous lagging feature:")
-//        continuous_lagging_feature.orderBy(desc("timestamp")).show()
+          println("_AboutToFail time window (" + failure_window + "s): t=" + failure_imminent + " to t=" + failure_time)
+          println("_AboutToFail records updated: " + binary_lagging_feature.count)
+          println("_RemainingUsefulLife records updated: " + continuous_lagging_feature.count)
 
-        // combine the two lagging features
-//        val lag_vars = binary_lagging_feature.join(continuous_lagging_feature, Seq("_id","timestamp","_"+deviceName+"AboutToFail","_"+deviceName+"RemainingUsefulLife"), "outer")
-        val lag_vars = continuous_lagging_feature.union(binary_lagging_feature)
-//        lag_vars.orderBy(desc("timestamp")).show()
-        // persist lagging features to MapR-DB
-        lag_vars.write.option("Operation", "Update").saveToMapRDB(tableName)
+          //        println("Continuous lagging feature:")
+          //        continuous_lagging_feature.orderBy(desc("timestamp")).show()
+
+          // combine the two lagging features
+          //        val lag_vars = binary_lagging_feature.join(continuous_lagging_feature, Seq("_id","timestamp","_"+deviceName+"AboutToFail","_"+deviceName+"RemainingUsefulLife"), "outer")
+          val lag_vars = continuous_lagging_feature.union(binary_lagging_feature)
+          //        lag_vars.orderBy(desc("timestamp")).show()
+          // persist lagging features to MapR-DB
+          lag_vars.write.option("Operation", "Update").saveToMapRDB(tableName)
 
 
-        // print a summary of the records which have been updated
-//        sc.loadFromMapRDB(tableName).where(field("timestamp") >= failure_imminent and field("timestamp") <= failure_time).select("timestamp","OutsideAirTemp","_"+deviceName+"AboutToFail")
-        val mqtt_df2 = sc.loadFromMapRDB(tableName).toDF()
-        println("Here's an excerpt of the lagging features updated in MapR-DB:")
-        mqtt_df2
-          .filter(mqtt_df2("timestamp") <= failure_time)
-          .select("timestamp","_"+deviceName+"AboutToFail","_"+deviceName+"RemainingUsefulLife")
-          .orderBy(desc("timestamp"))
-          .show(rows_to_update.count.toInt+5)
+          // print a summary of the records which have been updated
+          //        sc.loadFromMapRDB(tableName).where(field("timestamp") >= failure_imminent and field("timestamp") <= failure_time).select("timestamp","OutsideAirTemp","_"+deviceName+"AboutToFail")
+          val mqtt_df2 = sc.loadFromMapRDB(tableName).toDF()
+          println("Here is an excerpt of the lagging features updated in MapR-DB:")
+          mqtt_df2
+            .filter(mqtt_df2("timestamp") <= failure_time)
+            .select("timestamp", "_" + deviceName + "AboutToFail", "_" + deviceName + "RemainingUsefulLife")
+            .orderBy(desc("timestamp"))
+            .show(rows_to_update.count.toInt + 5)
 
-        // send notification to grafana for visualization
-        NotfyGrafana(grafana_url, "Failure event", deviceName + " failed")
+          // send notification to Grafana for visualization
+          NotfyGrafana(grafana_url, "Failure event", deviceName + " failed")
+        } catch {
+          case e: org.apache.spark.sql.AnalysisException => println("Ignoring reported failure for unknown device " + deviceName)
+        }
       }
     }
     ssc.start()
@@ -202,8 +208,8 @@ object UpdateLaggingFeatures {
     wr.flush()
     wr.close()
     val responseCode = con.getResponseCode
-    System.out.println("\nSending fault notification to Grafana: " + url)
-    System.out.println("Response Code: " + responseCode)
+    println("\nSending fault notification to Grafana: " + url)
+    println("Response Code: " + responseCode)
   }
 
 }
