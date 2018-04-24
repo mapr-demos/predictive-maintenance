@@ -1,0 +1,5 @@
+jupyter/Dataset/CMAPSSData
+.ipynb_checkpoints
+*.iml
+target
+.idea
