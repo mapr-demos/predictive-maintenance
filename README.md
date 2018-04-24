@@ -30,7 +30,7 @@ There are two objectives relating to predictive maintenance implemented in this 
 
 ## Install OpenTSDB and Grafana:
 
-Download and install `mapr-grafana`, `mapr-asynchbase`, and `mapr-opentsdb` from []http://artifactory.devops.lab/artifactory/prestage/releases-dev/MEP/](]http://artifactory.devops.lab/artifactory/prestage/releases-dev/MEP/)
+Download and install `mapr-grafana`, `mapr-asynchbase`, and `mapr-opentsdb` from [http://archive.mapr.com/releases/MEP/](http://archive.mapr.com/releases/MEP/)
 
 ```
 yum install mapr-opentsdb -y
@@ -79,7 +79,7 @@ maprcli stream topic create -path /apps/fastdata -topic vibrations -partitions 1
 
 # Predictive Maintenance Demo Procedure
 
-## STEP 1 - Synthesize MQTT stream:
+## STEP 1 - Simulate raw IoT data stream:
 
 This will stream 150 metrics roughly once a second.
 
@@ -93,6 +93,13 @@ cat mqtt.json | while read line; do echo $line | sed 's/{/{"timestamp":"'$(date 
 
 ```
 /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.MqttConsumer target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/mqtt:opto22 /apps/mqtt_records
+```
+
+Run this command to see how the row count increases:
+
+```
+/opt/mapr/drill/drill-*/bin/sqlline -u jdbc:drill: -n mapr
+    select count(*) from dfs.`/apps/mqtt_records`;
 ```
 
 ## STEP 3 - Save MQTT stream to OpenTSDB:
@@ -123,8 +130,7 @@ echo "{\"timestamp\":"$(date +%s -d '60 sec ago')",\"deviceName\":\"Chiller1\"}"
 
 ```
 $ mapr dbshell
-find /apps/mqtt_records --where '{ "$eq" : {"_Chiller1AboutToFail":true} }' --f _id,_Chiller1AboutToFail,timestamp
-find /apps/mqtt_records --where '{ "$eq" : {"timestamp":"1523339687"} }' --f _id,_Chiller1AboutToFail,timestamp
+find /apps/mqtt_records --where '{ "$eq" : {"_Chiller1AboutToFail":"true"} }' --f _id,_Chiller1AboutToFail,timestamp
 ```
 
 Here are a few examples commands to look at that table with `mapr dbshell`:
