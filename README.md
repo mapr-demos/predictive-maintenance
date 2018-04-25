@@ -102,7 +102,7 @@ Load the `Grafana/IoT_dashboard.json` file using Grafana's dashboard import func
 
 # Compile the demo code:
 
-On the mapr cluster:
+Compile the code on the mapr cluster. This could take up to 15 minutes.
 
 ```
 git clone https://github.com/mapr-demos/factory-iot-tutorial
@@ -126,7 +126,7 @@ maprcli stream topic create -path /apps/fastdata -topic vibrations -partitions 1
 
 ## STEP 1 - Simulate raw IoT data stream:
 
-This will stream 150 metrics roughly once a second.
+This will stream 150 metrics once every couple of seconds to `/apps/factory:mqtt`.
 
 ```
 cd sample_dataset
@@ -135,6 +135,8 @@ cat mqtt.json | while read line; do echo $line | sed 's/{/{"timestamp":"'$(date 
 ```
 
 ## STEP 2 - Save MQTT stream to MapR-DB:
+
+This will persist messages from stream `/apps/factory:mqtt` to MapR-DB table `/apps/mqtt_records`. 
 
 ```
 /opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.MqttConsumer target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/factory:mqtt /apps/mqtt_records
@@ -149,7 +151,7 @@ Run this command to see how the row count increases:
 
 ## STEP 3 - Save MQTT stream to OpenTSDB:
 
-This process sends the MQTT data stream to OpenTSDB, where it will be loaded by Grafana in a dashboard. 
+In order to see data in the Grafana dashboard, we need to write data to OpenTSDB. Here's how to continuously save the stream `/apps/factory:mqtt` to OpenTSDB:
 
 Update `localhost` with the hostname of the node running OpenTSDB.
 

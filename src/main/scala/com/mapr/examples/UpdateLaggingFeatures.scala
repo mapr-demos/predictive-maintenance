@@ -200,7 +200,7 @@ object UpdateLaggingFeatures {
     con.setRequestProperty("User-Agent", USER_AGENT)
     con.setRequestProperty("Accept", "*/*")
     val unixTime = System.currentTimeMillis
-    val urlParameters = "&time=" + unixTime + "&title=" + title + "&text=" + text + "&tag=UpdateLaggingFeatures"
+    val urlParameters = "&time=" + unixTime + "&title=" + title + "&text=" + text + "&tags=UpdateLaggingFeatures"
     // Send post request
     con.setDoOutput(true)
     val wr = new DataOutputStream(con.getOutputStream)
