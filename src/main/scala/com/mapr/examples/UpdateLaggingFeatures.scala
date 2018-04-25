@@ -160,7 +160,7 @@ object UpdateLaggingFeatures {
           val lag_vars = continuous_lagging_feature.union(binary_lagging_feature)
           //        lag_vars.orderBy(desc("timestamp")).show()
           // persist lagging features to MapR-DB
-          lag_vars.write.option("Operation", "Update").saveToMapRDB(tableName)
+          lag_vars.write.option("Operation", "InsertOrReplace").saveToMapRDB(tableName)
 
 
           // print a summary of the records which have been updated
