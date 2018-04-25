@@ -38,7 +38,7 @@ cd mapr-db-60-getting-started
 ./mapr_devsandbox_container_setup.sh
 ```
 
-## Step2 - Reduce memory usage required by the sandbox
+## Step 2 - Reduce memory usage required by the sandbox
 
 SSH to the sandbox container, with password "mapr":
 
@@ -52,7 +52,7 @@ Remove Hive and reconfigure Drill to use less memory:
 sudo apt-get remove mapr-hive mapr-spark -y
 ```
 	
-## Step 2 - Reconfigure the MapR sandbox
+## Step 3 - Reconfigure the MapR sandbox
 
 Install full versions of Spark and Kafka on the sandbox. This should take about 5 minutes.
 
@@ -72,7 +72,7 @@ sudo rm /etc/localtime
 sudo ln -s /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
 ```
 
-## Install OpenTSDB and Grafana:
+## Step 4 - Install OpenTSDB and Grafana:
 
 ```
 sudo apt-get install mapr-opentsdb -y
@@ -87,7 +87,7 @@ sudo mv /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf.new /opt/ma
 sudo chown mapr:mapr /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf
 ```
 
-Start OpenTSDB and Grafana:
+## Step 5 - Start OpenTSDB and Grafana:
 
 ```
 sudo /opt/mapr/server/configure.sh -R -OT `hostname -f`
@@ -110,7 +110,7 @@ cd factory-iot-tutorial
 mvn package
 ```
 
-## Create streams:
+## Step 6 - Create streams:
 
 On the mapr cluster:
  
@@ -124,7 +124,7 @@ maprcli stream topic create -path /apps/fastdata -topic vibrations -partitions 1
 
 # Predictive Maintenance Demo Procedure
 
-## STEP 1 - Simulate raw IoT data stream:
+## Step 1 - Simulate raw IoT data stream:
 
 This will stream 150 metrics once every couple of seconds to `/apps/factory:mqtt`.
 
@@ -134,7 +134,7 @@ gunzip mqtt.json.gz
 cat mqtt.json | while read line; do echo $line | sed 's/{/{"timestamp":"'$(date +%s)'",/g' | /opt/mapr/kafka/kafka-*/bin/kafka-console-producer.sh --topic /apps/factory:mqtt --broker-list this.will.be.ignored:9092; echo -n "."; sleep 1; done
 ```
 
-## STEP 2 - Save MQTT stream to MapR-DB:
+## Step 2 - Save MQTT stream to MapR-DB:
 
 This will persist messages from stream `/apps/factory:mqtt` to MapR-DB table `/apps/mqtt_records`. 
 
@@ -149,7 +149,7 @@ Run this command to see how the row count increases:
     select count(*) from dfs.`/apps/mqtt_records`;
 ```
 
-## STEP 3 - Save MQTT stream to OpenTSDB:
+## Step 3 - Save MQTT stream to OpenTSDB:
 
 In order to see data in the Grafana dashboard, we need to write data to OpenTSDB. Here's how to continuously save the stream `/apps/factory:mqtt` to OpenTSDB:
 
@@ -159,7 +159,7 @@ Update `localhost` with the hostname of the node running OpenTSDB.
 /opt/mapr/kafka/kafka-*/bin/kafka-console-consumer.sh --topic /apps/factory:mqtt --new-consumer --bootstrap-server not.applicable:0000 | while read line; do echo $line | jq -r "to_entries | map(\"\(.key) \(.value | tostring)\") | {t: .[0], x: .[]} | .[]" | paste -d ' ' - - | awk '{system("curl -X POST --data \x27{\"metric\": \""$3"\", \"timestamp\": "$2", \"value\": "$4", \"tags\": {\"host\": \"localhost\"}}\x27 http://localhost:4242/api/put")}'; echo -n "."; done
 ```
 
-## STEP 4 - Update lagging features in MapR-DB for each failure event:
+## Step 4 - Update lagging features in MapR-DB for each failure event:
 
 This process will listen for failure events on a MapR Streams topic and retroactively label lagging features in MapR-DB when failures occur, as well as render the failure event in Grafana. Update "http://localhost:3000" with the hostname and port for your Grafana instance.
 
@@ -167,13 +167,13 @@ This process will listen for failure events on a MapR Streams topic and retroact
 /opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/factory:failures /apps/mqtt_records http://localhost:3000
 ```
 
-## STEP 5 - Simulate a failure event:
+## Step 5 - Simulate a failure event:
 
 ```
 echo "{\"timestamp\":"$(date +%s -d '60 sec ago')",\"deviceName\":\"Chiller1\"}" | /opt/mapr/kafka/kafka-*/bin/kafka-console-producer.sh --topic /apps/factory:failures --broker-list this.will.be.ignored:9092
 ```
 
-## STEP 6 - Validate that lagging features have been updated:
+## Step 6 - Validate that lagging features have been updated:
 
 ```
 $ mapr dbshell
@@ -198,14 +198,14 @@ Here's an example of querying MQTT records table with Drill:
 ```
 
 
-## STEP 7 - Synthesize a high speed data stream:
+## Step 7 - Synthesize a high speed data stream:
 
 This stream simulates time-series amplitudes of a vibration signal, at one sample every 10ms.
 ```
 java -cp target/factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.HighSpeedProducer /apps/fastdata:vibrations 10
 ```
 
-## STEP 8 - Process high speed data stream:
+## Step 8 - Process high speed data stream:
 
 This will calculate FFTs on-the-fly for the high speed streaming data, and render an event in Grafana when FFTs changed more than 25% over a rolling window. This simulates anomaly detection for a vibration signal. Update "http://localhost:3000" with the hostname and port for your Grafana instance.
 
@@ -213,13 +213,13 @@ This will calculate FFTs on-the-fly for the high speed streaming data, and rende
 /opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibrations 25.0 http://localhost:3000
 ```
 
-## STEP 9 - Visualize data in Grafana
+## Step 9 - Visualize data in Grafana
 
 By now you should be able to see streaming MQTT data, vibration faults, and device failures in the Grafana dashboard.
 
 ![grafana dashboard](/images/grafana_screenshot.png?raw=true "Grafana Dashboard")
 
-## STEP 10 (Optional) - Explore Machine Learning techniques for Predictive Maintenance
+## Step 10 (Optional) - Explore Machine Learning techniques for Predictive Maintenance
 
 The focus of this tutorial is data engineering (aka feature engineering), and what you need to have in order to take advantage of machine learning (ML) for the purposes of predictive maintenance. Even though the details of ML are beyond the scope of this tutorial, it would not be complete without including a few ML examples. We've included several python notebooks have been provided to show how to load data from MapR into notebooks for Machine Learning with Tensorflow. 
 
