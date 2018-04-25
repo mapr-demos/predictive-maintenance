@@ -172,5 +172,19 @@ By now you should be able to see streaming MQTT data, vibration faults, and devi
 
 ![grafana dashboard](/images/grafana_screenshot.png?raw=true "Grafana Dashboard")
 
-## STEP 10 - Open Jupyter
-Open notebooks to see how Drill can be used to load MapR-DB data into notebooks for Deep Learning with Tensorflow.
+## STEP 10 (Optional) - Explore Machine Learning techniques for Predictive Maintenance
+
+The focus of this tutorial is data engineering (aka feature engineering), and what you need to have in order to take advantage of machine learning (ML) for the purposes of predictive maintenance. Even though the details of ML are beyond the scope of this tutorial, it would not be complete without including a few ML examples. We've included several python notebooks have been provided to show how to load data from MapR into notebooks for Machine Learning with Tensorflow. 
+
+* ***LSTM predictions for "About To Fail"*** - This notebook shows how to train a model using an LSTM neural network in Keras to predict whether a failure will occur in an airplane engine within the next 30 seconds. This type of classification is called, "binary classification" and the model is trained using labeled data, meaning this is "supervised learning", where the value being predicted is either true or false.  
+* ***LSTM predictions for "Remaining Useful Life"*** - This notebook shows how to train a model using an LSTM neural network in Keras to predict when an airplane engine will fail. The model is trained using labeled data, meaning this is "supervised learning", where the value being predicted is a number representing the time left before an airplane engine fails.
+* ***LSTM time series predictions from OpenTSDB*** - This notebook shows how to train a model to predict the next value in a sequence of numbers, which in this case, is a time series sequence of numbers stored in OpenTSDB. Not only does this notebook show how to train the LSTM model, but it also shows how to load training data into Tensorflow using the REST API for OpenTSDB.
+* ***RNN time series predictions from OpenTSDB*** - This notebook shows how to train a model to predict the next value in a sequence of numbers, which in this case, is a time series sequence of numbers stored in OpenTSDB. Not only does this notebook show how to train an RNN model, but it also shows how to load training data into Tensorflow using the REST API for OpenTSDB.
+* RNN predictions for MapR-DB data via Drill
+ 
+In order to run these examples you'll need keras and sklearn, which can be installed like this:
+
+```
+pip install keras sklearn
+```
+
