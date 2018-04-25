@@ -35,7 +35,7 @@ import org.apache.commons.codec.binary.Base64
 
   EXAMPLE:
 
-  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/mqtt:failures /apps/mqtt_records http://localhost:3000
+  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/factory:failures /apps/mqtt_records http://localhost:3000
 
   ****************************************************************************/
 

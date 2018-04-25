@@ -23,7 +23,7 @@ import org.apache.spark.sql.functions._
 
   SYNTHESIZE DATA:
 
-  cat sample_dataset/mqtt.json | while read line; do echo $line | sed 's/{/{"timestamp":"'$(date +%s)'",/g' | /opt/mapr/kafka/kafka-0.9.0/bin/kafka-console-producer.sh --topic /apps/mqtt:opto22 --broker-list this.will.be.ignored:9092; echo -n "."; done
+  cat sample_dataset/mqtt.json | while read line; do echo $line | sed 's/{/{"timestamp":"'$(date +%s)'",/g' | /opt/mapr/kafka/kafka-0.9.0/bin/kafka-console-producer.sh --topic /apps/factory:mqtt --broker-list this.will.be.ignored:9092; echo -n "."; done
 
   RUN:
 
@@ -31,7 +31,7 @@ import org.apache.spark.sql.functions._
 
   EXAMPLE:
 
-  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.MqttConsumer target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/mqtt:opto22 /apps/mqtt_records
+  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.MqttConsumer target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/factory:mqtt /apps/mqtt_records
 
   ****************************************************************************/
 
