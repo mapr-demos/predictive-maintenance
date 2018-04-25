@@ -159,7 +159,7 @@ object StreamingFourierTransform {
     con.setRequestProperty("User-Agent", USER_AGENT)
     con.setRequestProperty("Accept", "*/*")
     val unixTime = System.currentTimeMillis
-    val urlParameters = "&time=" + unixTime + "&title=" + title + "&text=" + text + "&tag=HighSpeedProducer"
+    val urlParameters = "&time=" + unixTime + "&title=" + title + "&text=" + text + "&tag=StreamingFourierTransform"
     // Send post request
     con.setDoOutput(true)
     val wr = new DataOutputStream(con.getOutputStream)
