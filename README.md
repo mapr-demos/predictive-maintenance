@@ -100,7 +100,7 @@ Load the `Grafana/IoT_dashboard.json` file using Grafana's dashboard import func
 
 ![grafana import](/images/grafana_import.png?raw=true "Grafana Import") 
 
-# Compile the demo code:
+## Compile the demo code:
 
 Compile the code on the mapr cluster. This could take up to 15 minutes.
 
@@ -121,6 +121,8 @@ maprcli stream topic create -path /apps/factory -topic failures -partitions 1 -j
 maprcli stream create -path /apps/fastdata -produceperm p -consumeperm p -topicperm p -ttl 900 -json
 maprcli stream topic create -path /apps/fastdata -topic vibrations -partitions 1 -json
 ```
+
+<hr>
 
 # Predictive Maintenance Demo Procedure
 
