@@ -48,7 +48,7 @@ Run the `init.sh` script to install Spark, OpenTSDB, Grafana, and some other thi
 
 ```
 ssh -p 2222 root@localhost
-wget https://raw.githubusercontent.com/mapr-demos/factory-iot-tutorial/master/init.sh
+wget https://raw.githubusercontent.com/mapr-demos/predictive-maintenance/master/init.sh
 chmod 700 ./init.sh
 sudo ./init.sh
 ```
@@ -78,7 +78,7 @@ For learning or debugging purposes you should run each of the following steps ma
 This will stream 150 metrics once every couple of seconds to `/apps/factory:mqtt`.
 
 ```
-cat ~/factory-iot-tutorial/sample_dataset/mqtt.json | while read line; do echo $line | sed 's/{/{"timestamp":"'$(date +%s)'",/g' | /opt/mapr/kafka/kafka-*/bin/kafka-console-producer.sh --topic /apps/factory:mqtt --broker-list this.will.be.ignored:9092; sleep 1; done
+cat ~/predictive-maintenance/sample_dataset/mqtt.json | while read line; do echo $line | sed 's/{/{"timestamp":"'$(date +%s)'",/g' | /opt/mapr/kafka/kafka-*/bin/kafka-console-producer.sh --topic /apps/factory:mqtt --broker-list this.will.be.ignored:9092; sleep 1; done
 ```
 
 ## Step 2 - Save IoT data stream to MapR-DB:
@@ -86,7 +86,7 @@ cat ~/factory-iot-tutorial/sample_dataset/mqtt.json | while read line; do echo $
 This will persist messages from stream `/apps/factory:mqtt` to MapR-DB table `/apps/mqtt_records`. 
 
 ```
-/opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.MqttConsumer ~/factory-iot-tutorial/target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/factory:mqtt /apps/mqtt_records
+/opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.MqttConsumer ~/predictive-maintenance/target/predictive-maintenance-1.0-jar-with-dependencies.jar /apps/factory:mqtt /apps/mqtt_records
 ```
 
 Run this command to see how the row count increases:
@@ -111,7 +111,7 @@ Update `localhost` with the hostname of the node running OpenTSDB.
 This process will listen for failure events on a MapR Streams topic and retroactively label lagging features in MapR-DB when failures occur, as well as render the failure event in Grafana. Update "http://localhost:3000" with the hostname and port for your Grafana instance.
 
 ```
-/opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures ~/factory-iot-tutorial/target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/factory:failures /apps/mqtt_records http://localhost:3000
+/opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures ~/predictive-maintenance/target/predictive-maintenance-1.0-jar-with-dependencies.jar /apps/factory:failures /apps/mqtt_records http://localhost:3000
 ```
 
 This particular step probably says the most about the value of MapR, because consider this: if you have a factory, instrumented by IoT devices reporting hundreds of metrics, per machine, per second, and you're tasked with the challenge of saving all that data until one day, often months into the future, you finally have a machine fail. At that point, you have to retroactively go back and update all those records as being "about to fail" or "x days to failure"  so that you can use that data for training models to predict those lagging features.  That's one heck of a DB update, right? The only way to store all that data is with a distributed database. This is what makes Spark and MapR-DB such a great fit. Spark - the distributed processing engine for big data, and MapR-DB - the distributed data store for big data, working together to process and store lots of data with speed and scalability. 
@@ -151,7 +151,7 @@ Here's an example of querying IoT data records table with Drill:
 
 This stream simulates time-series amplitudes of a vibration signal, at one sample every 10ms.
 ```
-java -cp ~/factory-iot-tutorial/target/factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.HighSpeedProducer /apps/fastdata:vibrations 10
+java -cp ~/predictive-maintenance/target/predictive-maintenance-1.0-jar-with-dependencies.jar com.mapr.examples.HighSpeedProducer /apps/fastdata:vibrations 10
 ```
 
 ## Step 8 - Process high speed data stream:
@@ -159,7 +159,7 @@ java -cp ~/factory-iot-tutorial/target/factory-iot-tutorial-1.0-jar-with-depende
 This will calculate FFTs on-the-fly for the high speed streaming data, and render an event in Grafana when FFTs changed more than 25% over a rolling window. This simulates anomaly detection for a vibration signal. Update "http://localhost:3000" with the hostname and port for your Grafana instance.
 
 ```
-/opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform ~/factory-iot-tutorial/target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibrations 25.0 http://localhost:3000
+/opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform ~/predictive-maintenance/target/predictive-maintenance-1.0-jar-with-dependencies.jar /apps/fastdata:vibrations 25.0 http://localhost:3000
 ```
 
 ## Step 9 - Visualize data in Grafana
@@ -170,7 +170,7 @@ By now you should be able to see streaming IoT data, vibration faults, and devic
 
 ## Step 10 (Optional) - Explore Machine Learning techniques for Predictive Maintenance
 
-The focus of this tutorial is data engineering (aka feature engineering), and what you need to have in order to take advantage of machine learning (ML) for the purposes of predictive maintenance. Even though the details of ML are beyond the scope of this tutorial, it would not be complete without including a few ML examples. We've included several python notebooks have been provided to show how to load data from MapR into notebooks for Machine Learning with Tensorflow. 
+The focus of this tutorial is data engineering (aka feature engineering), and what you need to have in order to take advantage of machine learning (ML) for predictive maintenance applications. Even though the details of ML are beyond the scope of this tutorial, this tutorial would not be complete without including a few ML examples, so several python notebooks have been provided to illustrate common algorithms for detecting anomolies and predicting machine failures using time-series data. We've also included a few notebooks to show how to load data from MapR into python notebooks using the ODBC connector for Drill and the REST API for OpenTSDB.
 
 * ***LSTM predictions for "About To Fail"*** - This notebook shows how to train a model using an LSTM neural network in Keras to predict whether a failure will occur in an airplane engine within the next 30 seconds. This type of classification is called, "binary classification" and the model is trained using labeled data, meaning this is "supervised learning", where the value being predicted is either true or false.  
 * ***LSTM predictions for "Remaining Useful Life"*** - This notebook shows how to train a model using an LSTM neural network in Keras to predict when an airplane engine will fail. The model is trained using labeled data, meaning this is "supervised learning", where the value being predicted is a number representing the time left before an airplane engine fails.
