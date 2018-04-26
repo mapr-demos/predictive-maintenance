@@ -32,6 +32,14 @@ There are two objectives relating to predictive maintenance implemented in this 
 
 # Preliminary Steps
 
+These steps explain how to setup this tutorial using the [MapR Container for Developers](https://maprdocs.mapr.com/home/MapRContainerDevelopers/MapRContainerDevelopersOverview.html) on MacOS.
+
+## Allocate 12GB to Docker
+
+This tutorial requires a lot of memory. We recommend allocating 12GB RAM, 4GB swap, and 2 CPUs to the Docker Community Edition for MacOS.
+
+![docker config](/images/docker_config.png?raw=true "Docker Config")
+
 ## Start the MapR sandbox
 
 Download and run the `./mapr_devsandbox_container_setup.sh` script.
@@ -170,22 +178,30 @@ By now you should be able to see streaming IoT data, vibration faults, and devic
 
 ## Step 10 (Optional) - Explore Machine Learning techniques for Predictive Maintenance
 
-The focus of this tutorial is data engineering (aka feature engineering), and what you need to have in order to take advantage of machine learning (ML) for predictive maintenance applications. Even though the details of ML are beyond the scope of this tutorial, this tutorial would not be complete without including a few ML examples, so several python notebooks have been provided to illustrate common algorithms for detecting anomolies and predicting machine failures using time-series data. We've also included a few notebooks to show how to load data from MapR into python notebooks using the ODBC connector for Drill and the REST API for OpenTSDB.
+This tutorial focuses on data engineering - i.e. getting data in the right format and in the right place in order to take advantage of machine learning (ML) for predictive maintenance applications. The details of ML are beyond the scope of this tutorial but we've including a few python notebooks to illustrate common ML techniques for detecting anomolies and predicting machine failures using time-series data stored in flat files, OpenTSDB, and/or MapR-DB.
 
-* ***LSTM predictions for "About To Fail"*** - This notebook shows how to train a binary classification model using an LSTM neural network in Keras to predict whether a failure will occur in an airplane engine within the next 30 seconds.
+### LSTM predictions for "About To Fail"
+
+This notebook shows how to train a binary classification model using an LSTM neural network in Keras to predict whether a failure will occur in an airplane engine within the next 30 seconds.
 ![lstm-about_to_fail](/images/lstm-about_to_fail.png?raw=true "LSTM Binary Classification Model")
-* ***LSTM predictions for "Remaining Useful Life"*** - This notebook shows how to train a point regression model using an LSTM neural network in Keras to predict the point in time when an airplane engine will fail.
+
+### LSTM predictions for "Remaining Useful Life"
+
+This notebook shows how to train a point regression model using an LSTM neural network in Keras to predict the point in time when an airplane engine will fail.
 ![lstm-rul](/images/lstm-rul.png?raw=true "LSTM Point Regression Model")
-* ***LSTM time series predictions from OpenTSDB*** - This notebook shows how to train a model to predict the next value in a sequence of numbers, which in this case, is a time series sequence of numbers stored in OpenTSDB. This notebook also shows how to load training data into Tensorflow using the REST API for OpenTSDB.
+
+### LSTM time series predictions from OpenTSDB
+
+This notebook shows how to train a model to predict the next value in a sequence of numbers, which in this case, is a time series sequence of numbers stored in OpenTSDB. This notebook also shows how to load training data into Tensorflow using the REST API for OpenTSDB.
 ![lstm-matplotlib](/images/lstm-matplotlib.png?raw=true "LSTM Time-Series Forecasting for OpenTSDB")
-* ***RNN time series predictions from OpenTSDB*** - This notebook is the same as the last one, except it shows how to build an RNN model instead LSTM for predicting future values of time-series data in OpenTSDB.
+
+### RNN time series predictions from OpenTSDB
+
+This notebook is the same as the last one, except it shows how to build an RNN model instead LSTM for predicting future values of time-series data in OpenTSDB.
 ![rnn-matplotlib](/images/rnn-matplotlib.png?raw=true "RNN Time-Series Forecasting for OpenTSDB")
-* ***RNN predictions for MapR-DB data via Drill*** - This notebook is the same as the last one, except it loads time-series data from MapR-DB instead of OpenTSDB.
+
+### RNN predictions for MapR-DB data via Drill
+
+This notebook is the same as the last one, except it loads time-series data from MapR-DB instead of OpenTSDB.
 ![rnn-zeppelin](/images/rnn-zeppelin.png?raw=true "RNN Time-Series Forecasting for MapR-DB")
-
-In order to run these examples you'll need keras and sklearn, which can be installed like this:
-
-```
-pip install keras sklearn
-```
 
