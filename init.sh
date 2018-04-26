@@ -34,8 +34,8 @@ sudo /opt/mapr/server/configure.sh -R -OT `hostname -f`
 sudo /opt/mapr/opentsdb/opentsdb-2.4.0/etc/init.d/opentsdb start
 
 # Download and compile the tutorial code
-git clone https://github.com/mapr-demos/factory-iot-tutorial
-cd factory-iot-tutorial/sample_dataset
+git clone https://github.com/mapr-demos/predictive-maintenance
+cd predictive-maintenance/sample_dataset
 gunzip mqtt.json.gz
 cd ..
 mvn package

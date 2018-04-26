@@ -4,7 +4,7 @@
 # Each program is run in a screen terminal and backgrounded.
 ###############################################################################
 
-cd ~/factory-iot-tutorial
+cd ~/predictive-maintenance
 
 screen -dm -S step1-iot_producer bash -c "./step1.sh"
 sleep 1
