@@ -32,7 +32,7 @@ There are two objectives relating to predictive maintenance implemented in this 
 
 # Preliminary Steps
 
-## Step 1 - Start the MapR sandbox
+## Start the MapR sandbox
 
 Download and run the `./mapr_devsandbox_container_setup.sh` script.
 
@@ -42,56 +42,18 @@ cd mapr-db-60-getting-started
 ./mapr_devsandbox_container_setup.sh
 ```
 
-## Step 2 - Reduce memory usage required by the sandbox
+## Run the `init.sh` script
 
-SSH to the sandbox container, with password "mapr":
+Run the `init.sh` script to install Spark, OpenTSDB, Grafana, and some other things necessary to use the sample applications in this tutorial. SSH to the sandbox container, with password "mapr" and run the following commands. This should take about 20 minutes.
 
 ```
 ssh -p 2222 root@localhost
+wget https://raw.githubusercontent.com/mapr-demos/factory-iot-tutorial/master/init.sh
+chmod 700 ./init.sh
+sudo ./init.sh
 ```
 
-Remove Hive and reconfigure Drill to use less memory:
-
-```
-sudo apt-get remove mapr-hive mapr-spark -y
-```
-	
-## Step 3 - Reconfigure the MapR sandbox
-
-Install full versions of Spark and Kafka on the sandbox. This should take about 5 minutes.
-
-```
-sudo apt-get install maven git jq -y
-sudo apt-get install mapr-spark mapr-spark-master mapr-spark-historyserver mapr-spark-thriftserver mapr-kafka -y 
-cp /opt/mapr/spark/spark-2.2.1/conf/slaves.template /opt/mapr/spark/spark-2.2.1/conf/slaves
-sudo /opt/mapr/server/configure.sh -R
-```
-
-Set the local timezone so Grafana timestamps 
-
-```
-sudo apt-get --download-only install tzdata
-sudo dpkg -i  /var/cache/apt/archives/tzdata*.deb
-sudo rm /etc/localtime
-sudo ln -s /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
-```
-
-## Step 4 - Install OpenTSDB and Grafana:
-
-```
-sudo apt-get install mapr-opentsdb -y
-sudo apt-get install mapr-grafana -y
-```
-
-Enabled write access to opentsdb:
-
-```
-sudo cat /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf | sed "s/#tsd.mode = ro/tsd.mode = rw/g" > /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf.new
-sudo mv /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf.new /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf
-sudo chown mapr:mapr /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf
-```
-
-## Step 5 - Start OpenTSDB and Grafana:
+## Import the Grafana dashboard
 
 ```
 sudo /opt/mapr/server/configure.sh -R -OT `hostname -f`
@@ -104,27 +66,6 @@ Load the `Grafana/IoT_dashboard.json` file using Grafana's dashboard import func
 
 ![grafana import](/images/grafana_import.png?raw=true "Grafana Import") 
 
-## Compile the demo code:
-
-Compile the code on the mapr cluster. This could take up to 15 minutes.
-
-```
-git clone https://github.com/mapr-demos/factory-iot-tutorial
-cd factory-iot-tutorial
-mvn package
-```
-
-## Step 6 - Create streams:
-
-On the mapr cluster:
- 
-``` 
-maprcli stream create -path /apps/factory -produceperm p -consumeperm p -topicperm p -ttl 900 -json
-maprcli stream topic create -path /apps/factory -topic mqtt -partitions 1 -json
-maprcli stream topic create -path /apps/factory -topic failures -partitions 1 -json
-maprcli stream create -path /apps/fastdata -produceperm p -consumeperm p -topicperm p -ttl 900 -json
-maprcli stream topic create -path /apps/fastdata -topic vibrations -partitions 1 -json
-```
 
 <hr>
 
