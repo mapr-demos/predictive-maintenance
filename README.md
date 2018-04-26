@@ -71,22 +71,22 @@ Load the `Grafana/IoT_dashboard.json` file using Grafana's dashboard import func
 
 # Predictive Maintenance Demo Procedure
 
-## Step 1 - Simulate raw IoT data stream:
+For learning or debugging purposes you should run each of the following steps manually but if you just want to see data show up in Grafana then just run `./run.sh`.
+
+## Step 1 - Simulate Factory IoT data stream:
 
 This will stream 150 metrics once every couple of seconds to `/apps/factory:mqtt`.
 
 ```
-cd sample_dataset
-gunzip mqtt.json.gz
-cat mqtt.json | while read line; do echo $line | sed 's/{/{"timestamp":"'$(date +%s)'",/g' | /opt/mapr/kafka/kafka-*/bin/kafka-console-producer.sh --topic /apps/factory:mqtt --broker-list this.will.be.ignored:9092; echo -n "."; sleep 1; done
+cat ~/factory-iot-tutorial/sample_dataset/mqtt.json | while read line; do echo $line | sed 's/{/{"timestamp":"'$(date +%s)'",/g' | /opt/mapr/kafka/kafka-*/bin/kafka-console-producer.sh --topic /apps/factory:mqtt --broker-list this.will.be.ignored:9092; sleep 1; done
 ```
 
-## Step 2 - Save MQTT stream to MapR-DB:
+## Step 2 - Save IoT data stream to MapR-DB:
 
 This will persist messages from stream `/apps/factory:mqtt` to MapR-DB table `/apps/mqtt_records`. 
 
 ```
-/opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.MqttConsumer target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/factory:mqtt /apps/mqtt_records
+/opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.MqttConsumer ~/factory-iot-tutorial/target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/factory:mqtt /apps/mqtt_records
 ```
 
 Run this command to see how the row count increases:
@@ -96,14 +96,14 @@ Run this command to see how the row count increases:
     select count(*) from dfs.`/apps/mqtt_records`;
 ```
 
-## Step 3 - Save MQTT stream to OpenTSDB:
+## Step 3 - Save IoT data stream to OpenTSDB:
 
 In order to see data in the Grafana dashboard, we need to write data to OpenTSDB. Here's how to continuously save the stream `/apps/factory:mqtt` to OpenTSDB:
 
 Update `localhost` with the hostname of the node running OpenTSDB.
 
 ```
-/opt/mapr/kafka/kafka-*/bin/kafka-console-consumer.sh --topic /apps/factory:mqtt --new-consumer --bootstrap-server not.applicable:0000 | while read line; do echo $line | jq -r "to_entries | map(\"\(.key) \(.value | tostring)\") | {t: .[0], x: .[]} | .[]" | paste -d ' ' - - | awk '{system("curl -X POST --data \x27{\"metric\": \""$3"\", \"timestamp\": "$2", \"value\": "$4", \"tags\": {\"host\": \"localhost\"}}\x27 http://localhost:4242/api/put")}'; echo -n "."; done
+/opt/mapr/kafka/kafka-*/bin/kafka-console-consumer.sh --topic /apps/factory:mqtt --bootstrap-server not.applicable:0000 | while read line; do echo $line | jq -r "to_entries | map(\"\(.key) \(.value | tostring)\") | {t: .[0], x: .[]} | .[]" | paste -d ' ' - - | awk '{system("curl -X POST --data \x27{\"metric\": \""$3"\", \"timestamp\": "$2", \"value\": "$4", \"tags\": {\"host\": \"localhost\"}}\x27 http://localhost:4242/api/put")}'; echo -n "."; done
 ```
 
 ## Step 4 - Update lagging features in MapR-DB for each failure event:
@@ -111,7 +111,7 @@ Update `localhost` with the hostname of the node running OpenTSDB.
 This process will listen for failure events on a MapR Streams topic and retroactively label lagging features in MapR-DB when failures occur, as well as render the failure event in Grafana. Update "http://localhost:3000" with the hostname and port for your Grafana instance.
 
 ```
-/opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/factory:failures /apps/mqtt_records http://localhost:3000
+/opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures ~/factory-iot-tutorial/target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/factory:failures /apps/mqtt_records http://localhost:3000
 ```
 
 This particular step probably says the most about the value of MapR, because consider this: if you have a factory, instrumented by IoT devices reporting hundreds of metrics, per machine, per second, and you're tasked with the challenge of saving all that data until one day, often months into the future, you finally have a machine fail. At that point, you have to retroactively go back and update all those records as being "about to fail" or "x days to failure"  so that you can use that data for training models to predict those lagging features.  That's one heck of a DB update, right? The only way to store all that data is with a distributed database. This is what makes Spark and MapR-DB such a great fit. Spark - the distributed processing engine for big data, and MapR-DB - the distributed data store for big data, working together to process and store lots of data with speed and scalability. 
@@ -139,7 +139,7 @@ find --table /apps/mqtt_records --where '{"$gt" : {"_id" : "1523079964"}}' --ord
 find --table /apps/mqtt_records --where '{"$gt" : {"timestamp" : "1523079964"}}' --fields _Chiller2RemainingUsefulLife,timestamp
 ```
 
-Here's an example of querying MQTT records table with Drill:
+Here's an example of querying IoT data records table with Drill:
 
 ```
 /opt/mapr/drill/drill-*/bin/sqlline -u jdbc:drill: -n mapr
@@ -151,7 +151,7 @@ Here's an example of querying MQTT records table with Drill:
 
 This stream simulates time-series amplitudes of a vibration signal, at one sample every 10ms.
 ```
-java -cp target/factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.HighSpeedProducer /apps/fastdata:vibrations 10
+java -cp ~/factory-iot-tutorial/target/factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.HighSpeedProducer /apps/fastdata:vibrations 10
 ```
 
 ## Step 8 - Process high speed data stream:
@@ -159,12 +159,12 @@ java -cp target/factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.exam
 This will calculate FFTs on-the-fly for the high speed streaming data, and render an event in Grafana when FFTs changed more than 25% over a rolling window. This simulates anomaly detection for a vibration signal. Update "http://localhost:3000" with the hostname and port for your Grafana instance.
 
 ```
-/opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibrations 25.0 http://localhost:3000
+/opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform ~/factory-iot-tutorial/target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibrations 25.0 http://localhost:3000
 ```
 
 ## Step 9 - Visualize data in Grafana
 
-By now you should be able to see streaming MQTT data, vibration faults, and device failures in the Grafana dashboard.
+By now you should be able to see streaming IoT data, vibration faults, and device failures in the Grafana dashboard.
 
 ![grafana dashboard](/images/grafana_screenshot.png?raw=true "Grafana Dashboard")
 

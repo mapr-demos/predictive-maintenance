@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ###############################################################################
 # This script installs Spark, OpenTSDB, and Grafana in the MapR developer
 # sandbox container so the sample applications in the Predictive Maintenance
@@ -7,7 +7,7 @@
 
 # Reduce memory usage required by the sandbox
 sudo apt-get remove mapr-hive mapr-spark -y
-sudo apt-get install maven git jq -y
+sudo apt-get install maven git screen jq -y
 
 # Install Spark and Kafka
 sudo apt-get install mapr-spark mapr-spark-master mapr-spark-historyserver mapr-spark-thriftserver mapr-kafka -y
