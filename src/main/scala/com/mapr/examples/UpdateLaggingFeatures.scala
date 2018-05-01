@@ -124,7 +124,7 @@ object UpdateLaggingFeatures {
         //        println(ds.filter(a => {a.timestamp >= failure_time}).map(a => {a.timestamp}).count)
 
         // Mark the device as "about to fail" for a period of time leading up to failure_time
-        val failure_window = "20"  // in seconds, to match Unix time given by `date +%s`
+        val failure_window = "30"  // in seconds, to match Unix time given by `date +%s`
         val failure_imminent = (failure_time.toInt - failure_window.toInt).toString
 
         // This try block catches org.apache.spark.sql.AnalysisException errors caused by trying to lookup columns for devices that aren't part of the schema
