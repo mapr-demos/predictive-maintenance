@@ -121,7 +121,7 @@ This process will listen for failure events on a MapR Streams topic and retroact
 ```
 /opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures ~/predictive-maintenance/target/predictive-maintenance-1.0-jar-with-dependencies.jar /apps/factory:failures /apps/mqtt_records http://localhost:3000
 ```
-<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/lagging_features_explained.png" width="70%" align="center">
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/lagging_features_explanation.png" width="70%" align="center">
 
 This particular step probably says the most about the value of MapR, because consider this: if you have a factory, instrumented by IoT devices reporting hundreds of metrics, per machine, per second, and you're tasked with the challenge of saving all that data until one day, often months into the future, you finally have a machine fail. At that point, you have to retroactively go back and update all those records as being "about to fail" or "x days to failure"  so that you can use that data for training models to predict those lagging features.  That's one heck of a DB update, right? The only way to store all that data is with a distributed database. This is what makes Spark and MapR-DB such a great fit. Spark - the distributed processing engine for big data, and MapR-DB - the distributed data store for big data, working together to process and store lots of data with speed and scalability. 
 
