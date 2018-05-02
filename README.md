@@ -38,7 +38,8 @@ These steps explain how to setup this tutorial using the [MapR Container for Dev
 
 This tutorial requires a lot of memory. We recommend allocating 12GB RAM, 4GB swap, and 2 CPUs to the Docker Community Edition for MacOS.
 
-![docker config](/images/docker_config.png?raw=true "Docker Config")
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/docker_config.png" width="50%" align="center">
+
 
 ## Start the MapR sandbox
 
@@ -121,14 +122,22 @@ This process will listen for failure events on a MapR Streams topic and retroact
 ```
 /opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures ~/predictive-maintenance/target/predictive-maintenance-1.0-jar-with-dependencies.jar /apps/factory:failures /apps/mqtt_records http://localhost:3000
 ```
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/lagging_features_explained.png" width="70%" align="center">
 
 This particular step probably says the most about the value of MapR, because consider this: if you have a factory, instrumented by IoT devices reporting hundreds of metrics, per machine, per second, and you're tasked with the challenge of saving all that data until one day, often months into the future, you finally have a machine fail. At that point, you have to retroactively go back and update all those records as being "about to fail" or "x days to failure"  so that you can use that data for training models to predict those lagging features.  That's one heck of a DB update, right? The only way to store all that data is with a distributed database. This is what makes Spark and MapR-DB such a great fit. Spark - the distributed processing engine for big data, and MapR-DB - the distributed data store for big data, working together to process and store lots of data with speed and scalability. 
 
 ## Step 5 - Simulate a failure event:
 
+To simulate a device failure, run this command:
+
 ```
 echo "{\"timestamp\":"$(date +%s -d '60 sec ago')",\"deviceName\":\"Chiller1\"}" | /opt/mapr/kafka/kafka-*/bin/kafka-console-producer.sh --topic /apps/factory:failures --broker-list this.will.be.ignored:9092
 ```
+
+This will trigger the Spark process you ran in the previous step to update lagging features in the MapR-DB table "/apps/mqtt_records". Once it sees the event you simulated, you should see it output information about the lagging features it labeled, like this:
+
+![Update Lagging Features screenshot](/images/UpdateLagging_screenshot.png?raw=true "Update Lagging Features screenshot")
+
 
 ## Step 6 - Validate that lagging features have been updated:
 
