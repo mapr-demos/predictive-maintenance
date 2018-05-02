@@ -38,7 +38,7 @@ These steps explain how to setup this tutorial using the [MapR Container for Dev
 
 This tutorial requires a lot of memory. We recommend allocating 12GB RAM, 4GB swap, and 2 CPUs to the Docker Community Edition for MacOS.
 
-<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/docker_config.png" width="50%" align="center">
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/docker_config.png" width="50%">
 
 
 ## Start the MapR sandbox
@@ -73,8 +73,7 @@ Open Grafana data sources, with a URL like [http://maprdemo:3000/datasources/edi
 
 Load the `Grafana/IoT_dashboard.json` file using Grafana's dashboard import functionality, and specify "MaprMonitoringOpenTSDB" as the data source, as shown below:
 
-![grafana import](/images/grafana_import.png?raw=true "Grafana Import") 
-
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/grafana_import.png" width="50%">
 
 <hr>
 
