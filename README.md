@@ -195,8 +195,8 @@ Open the Drill web interface. If you're running MapR on your laptop then that's 
 ```
 SELECT _day_of_week_long, count(_day_of_week_long) FROM dfs.`/apps/mqtt_records` group by _day_of_week_long;
 ```
-<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_query-1.png" width="50%">
-<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_result-1.png" width="50%">
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_query_1.png" width="50%">
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_result_1.png" width="50%">
 
 ### Count how many faults have been detected:
 
@@ -207,8 +207,8 @@ SELECT _id, _day_of_week_long, _Chiller1AboutToFail, ROW_NUMBER() OVER (PARTITIO
 )
 SELECT * from x WHERE _Chiller1AboutToFail = 'true' and fault = 1;
 ```
-<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_query-2.png" width="50%">
-<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_result-2.png" width="50%">
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_query_2.png" width="50%">
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_result_2.png" width="50%">
 
 
 Drill can also be used to load data from MapR-DB into data science notebooks. Examples of this are shown in the following section.
