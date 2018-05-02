@@ -184,7 +184,36 @@ By now you should be able to see streaming IoT data, vibration faults, and devic
 
 ![grafana dashboard](/images/grafana_screenshot.png?raw=true "Grafana Dashboard")
 
-## Step 10 (Optional) - Explore Machine Learning techniques for Predictive Maintenance
+## Step 10 - Explore IoT data with Apache Drill
+
+[Apache Drill](https://drill.apache.org/) is a Unix service that unifies access to data across a variety of data formats and sources. MapR is the primary contributor to Apache Drill, so naturally it is included in the MapR platform. Here's how you can use it to explore some of the IoT data we've gathered so far in this tutorial. 
+
+Open the Drill web interface. If you're running MapR on your laptop then that's probably at [http://localhost:8047](http://localhost:8047). Here are a couple useful queries:
+
+### Show how many messages have arrived cumulatively over days of the week:
+
+```SELECT _day_of_week_long, count(_day_of_week_long) FROM dfs.`/apps/mqtt_records` group by _day_of_week_long;```
+
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_query-1.png" width="50%">
+
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_result-1.png" width="50%">
+
+### Count how many faults have been detected:
+
+```WITH x AS
+(
+SELECT _id, _day_of_week_long, _Chiller1AboutToFail, ROW_NUMBER() OVER (PARTITION BY _Chiller1AboutToFail ORDER BY _id) as fault FROM dfs.`/apps/mqtt_records`
+)
+SELECT * from x WHERE _Chiller1AboutToFail = 'true' and fault = 1;```
+
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_query-2.png" width="50%">
+
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_result-2.png" width="50%">
+
+
+Drill can also be used to load data from MapR-DB into data science notebooks. Examples of this are shown in the following section.
+
+## Step 11 (Optional) - Explore Machine Learning techniques for Predictive Maintenance
 
 This tutorial focuses on data engineering - i.e. getting data in the right format and in the right place in order to take advantage of machine learning (ML) for predictive maintenance applications. The details of ML are beyond the scope of this tutorial but we've including a few python notebooks to illustrate common ML techniques for detecting anomolies and predicting machine failures using time-series data stored in flat files, OpenTSDB, and/or MapR-DB.
 
