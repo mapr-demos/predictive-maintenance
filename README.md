@@ -193,11 +193,9 @@ Open the Drill web interface. If you're running MapR on your laptop then that's 
 ### Show how many messages have arrived cumulatively over days of the week:
 
 ```
-SELECT _day_of_week_long, count(_day_of_week_long) FROM dfs.\`/apps/mqtt_records\` group by _day_of_week_long;
+SELECT _day_of_week_long, count(_day_of_week_long) FROM dfs.`/apps/mqtt_records` group by _day_of_week_long;
 ```
-
 <img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_query-1.png" width="50%">
-
 <img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_result-1.png" width="50%">
 
 ### Count how many faults have been detected:
@@ -205,13 +203,11 @@ SELECT _day_of_week_long, count(_day_of_week_long) FROM dfs.\`/apps/mqtt_records
 ```
 WITH x AS
 (
-SELECT _id, _day_of_week_long, _Chiller1AboutToFail, ROW_NUMBER() OVER (PARTITION BY _Chiller1AboutToFail ORDER BY _id) as fault FROM dfs.\`/apps/mqtt_records\`
+SELECT _id, _day_of_week_long, _Chiller1AboutToFail, ROW_NUMBER() OVER (PARTITION BY _Chiller1AboutToFail ORDER BY _id) as fault FROM dfs.`/apps/mqtt_records`
 )
 SELECT * from x WHERE _Chiller1AboutToFail = 'true' and fault = 1;
 ```
-
 <img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_query-2.png" width="50%">
-
 <img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/drill_result-2.png" width="50%">
 
 
