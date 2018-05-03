@@ -91,7 +91,7 @@ cat ~/predictive-maintenance/sample_dataset/mqtt.json | while read line; do echo
 
 ## Step 2 - Save IoT data stream to MapR-DB:
 
-In the next step we'll save the original IoT data stream to OpenTSDB so we can visualize it in Grafana, but in this step we save that stream to MapR-DB so we can apply labels to the data necessary for supervised machine learning, as discussed in Step 4.
+In the next step we'll save the IoT data stream to OpenTSDB so we can visualize it in Grafana, but in this step we save that stream to MapR-DB so we can apply labels to the data necessary for supervised machine learning, as discussed in Step 4.
 
 Run the following command to persist messages from stream `/apps/factory:mqtt` to MapR-DB table `/apps/mqtt_records`. 
 
