@@ -120,7 +120,7 @@ After you have run that command you should be able to visualize the streaming Io
 
 <img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/grafana_screenshot_2.png" width="50%" align="center">
 
-2. ***Building mock-up*** - Update the `OPENTSDB_HOST` variable at the top of [webapp/BuildingControl.html](https://github.com/mapr-demos/predictive-maintenance/blob/master/webapp/BuildingControl.html), then open it to see a simulated view of the HVAC system from a single-file serverless webapp.
+2. ***Building mock-up*** - Update the `OPENTSDB_HOST` variable at the top of [webapp/BuildingControl.html](https://github.com/mapr-demos/predictive-maintenance/blob/master/webapp/BuildingControl.html), then open it to see a simulated view of the HVAC system from a simple serverless web page.
 
 <img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/BuildingControl.png" width="50%" align="center">
 
