@@ -80,7 +80,7 @@
 	&lt;!--------------------------------------------------&gt;
 	&lt;script src="https://code.jquery.com/jquery-3.2.1.min.js"&gt;&lt;/script&gt;</string>
 	<key>lastCheckDate</key>
-	<date>2018-05-03T23:17:01Z</date>
+	<date>2018-05-03T23:37:39Z</date>
 	<key>layout</key>
 	<dict>
 		<key>currentInspectorPane</key>
@@ -285,7 +285,7 @@
 			</dict>
 		</array>
 		<key>selectedTabIndex</key>
-		<integer>0</integer>
+		<integer>2</integer>
 		<key>showInspectorView</key>
 		<true/>
 		<key>showResourcesView</key>
