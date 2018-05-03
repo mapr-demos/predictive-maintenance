@@ -117,7 +117,7 @@ Update `localhost` with the hostname of the node running OpenTSDB.
 After you have run that command you should be able to visualize the streaming IoT data. There are two ways to visualize this data:
 
 1. ***Grafana dashboard*** - Depending on where you have installed Grafana, this can be opened with a URL like [http://maprdemo:3000](http://maprdemo:3000)
-2. ***Building monitor mock-up*** - Update the `OPENTSDB_HOST` variable at the top of [webapp/BuildingControl.html](file://webapp/BuildingControl.html), then open it to see a simulated view of the HVAC system from a single-file serverless webapp.
+2. ***Building monitor mock-up*** - Update the `OPENTSDB_HOST` variable at the top of [webapp/BuildingControl.html](https://github.com/mapr-demos/predictive-maintenance/blob/master/webapp/BuildingControl.html), then open it to see a simulated view of the HVAC system from a single-file serverless webapp.
 
 <img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/BuildingControl.png" width="70%" align="center">
 
