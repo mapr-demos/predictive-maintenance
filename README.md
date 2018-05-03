@@ -119,7 +119,7 @@ After you have run that command you should be able to visualize the streaming Io
 1. ***Grafana dashboard*** - Depending on where you have installed Grafana, this can be opened with a URL like [http://maprdemo:3000](http://maprdemo:3000)
 2. ***Building monitor mock-up*** - Update the `OPENTSDB_HOST` variable at the top of [webapp/BuildingControl.html](https://github.com/mapr-demos/predictive-maintenance/blob/master/webapp/BuildingControl.html), then open it to see a simulated view of the HVAC system from a single-file serverless webapp.
 
-<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/BuildingControl.png" width="70%" align="center">
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/BuildingControl.png" width="50%" align="center">
 
 
 ## Step 4 - Update lagging features in MapR-DB for each failure event:
