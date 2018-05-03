@@ -91,7 +91,9 @@ cat ~/predictive-maintenance/sample_dataset/mqtt.json | while read line; do echo
 
 ## Step 2 - Save IoT data stream to MapR-DB:
 
-This will persist messages from stream `/apps/factory:mqtt` to MapR-DB table `/apps/mqtt_records`. 
+In the next step we'll save the original IoT data stream to OpenTSDB so we can visualize it in Grafana, but in this step we save that stream to MapR-DB so we can apply labels to the data necessary for supervised machine learning, as discussed in Step 4.
+
+Run the following command to persist messages from stream `/apps/factory:mqtt` to MapR-DB table `/apps/mqtt_records`. 
 
 ```
 /opt/mapr/spark/spark-*/bin/spark-submit --class com.mapr.examples.MqttConsumer ~/predictive-maintenance/target/predictive-maintenance-1.0-jar-with-dependencies.jar /apps/factory:mqtt /apps/mqtt_records
@@ -106,9 +108,9 @@ Run this command to see how the row count increases:
 
 ## Step 3 - Save IoT data stream to OpenTSDB:
 
-Save streaming data in `/apps/factory:mqtt` to OpenTSDB with this command:
+In this step we save the IoT data stream to OpenTSDB so we can visualize it in Grafana. 
 
-Update `localhost` with the hostname of the node running OpenTSDB.
+Update `localhost:4242` with the hostname and port of your OpenTSDB server before running the following command:
 
 ```
 /opt/mapr/kafka/kafka-*/bin/kafka-console-consumer.sh --new-consumer --topic /apps/factory:mqtt --bootstrap-server not.applicable:0000 | while read line; do echo $line | jq -r "to_entries | map(\"\(.key) \(.value | tostring)\") | {t: .[0], x: .[]} | .[]" | paste -d ' ' - - | awk '{system("curl -X POST --data \x27{\"metric\": \""$3"\", \"timestamp\": "$2", \"value\": "$4", \"tags\": {\"host\": \"localhost\"}}\x27 http://localhost:4242/api/put")}'; echo -n "."; done
