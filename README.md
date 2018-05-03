@@ -81,9 +81,9 @@ Load the `Grafana/IoT_dashboard.json` file using Grafana's dashboard import func
 
 For learning or debugging purposes you should run each of the following steps manually but if you just want to see data show up in Grafana then just run `./run.sh`.
 
-## Step 1 - Simulate Factory IoT data stream:
+## Step 1 - Simulate HVAC data stream:
 
-This will stream 150 metrics once every couple of seconds to `/apps/factory:mqtt`.
+We have provided a dataset captured from a real-world heating, ventilation, and air conditioning (HVAC) system in the `sample_dataset` folder. Run the following command to replay that HVAC stream to `/apps/factory:mqtt`.
 
 ```
 cat ~/predictive-maintenance/sample_dataset/mqtt.json | while read line; do echo $line | sed 's/{/{"timestamp":"'$(date +%s)'",/g' | /opt/mapr/kafka/kafka-*/bin/kafka-console-producer.sh --topic /apps/factory:mqtt --broker-list this.will.be.ignored:9092; sleep 1; done
@@ -106,13 +106,21 @@ Run this command to see how the row count increases:
 
 ## Step 3 - Save IoT data stream to OpenTSDB:
 
-In order to see data in the Grafana dashboard, we need to write data to OpenTSDB. Here's how to continuously save the stream `/apps/factory:mqtt` to OpenTSDB:
+Save streaming data in `/apps/factory:mqtt` to OpenTSDB with this command:
 
 Update `localhost` with the hostname of the node running OpenTSDB.
 
 ```
 /opt/mapr/kafka/kafka-*/bin/kafka-console-consumer.sh --new-consumer --topic /apps/factory:mqtt --bootstrap-server not.applicable:0000 | while read line; do echo $line | jq -r "to_entries | map(\"\(.key) \(.value | tostring)\") | {t: .[0], x: .[]} | .[]" | paste -d ' ' - - | awk '{system("curl -X POST --data \x27{\"metric\": \""$3"\", \"timestamp\": "$2", \"value\": "$4", \"tags\": {\"host\": \"localhost\"}}\x27 http://localhost:4242/api/put")}'; echo -n "."; done
 ```
+
+After you have run that command you should be able to visualize the streaming IoT data. There are two ways to visualize this data:
+
+1. *** Grafana dashboard *** - Depending on where you have installed Grafana, this can be opened with a URL like [http://maprdemo:3000](http://maprdemo:3000)
+2. *** Building monitor mock-up *** - Update the `OPENTSDB_HOST` variable at the top of [webapp/BuildingControl.html](file://webapp/BuildingControl.html), then open it to see a simulated view of the HVAC system from a single-file serverless webapp.
+
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/BuildingControl.png" width="70%" align="center">
+
 
 ## Step 4 - Update lagging features in MapR-DB for each failure event:
 
