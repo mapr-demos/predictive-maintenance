@@ -184,7 +184,7 @@ java -cp ~/predictive-maintenance/target/predictive-maintenance-1.0-jar-with-dep
 ```
 ### Why are we simulating a vibration sensor?
 
-Degradation in machines often manifests itself as a low rumble or a small shake. These unusual vibrations give you the first clue that a machine is nearing the end of its useful life, so it's very important to detect those anomolies. Vibration sensors measure the displacement or velocity of motion thousands of times per second. Analyzing those signals is typically done in the frequency domain. An algorithm called "fast Fourier transform" (FFT) can sample time-series vibration data and identify its component frequencies. In the next step you will run a command the converts the simulated vibration data to the frequency domain with an FFT and raises alarms when vibration frequencies vary more than a predefined threshold.
+Degradation in machines often manifests itself as a low rumble or a small shake. These unusual vibrations give you the first clue that a machine is nearing the end of its useful life, so it's very important to detect those anomalies. Vibration sensors measure the displacement or velocity of motion thousands of times per second. Analyzing those signals is typically done in the frequency domain. An algorithm called "fast Fourier transform" (FFT) can sample time-series vibration data and identify its component frequencies. In the next step you will run a command the converts the simulated vibration data to the frequency domain with an FFT and raises alarms when vibration frequencies vary more than a predefined threshold.
 
 This demonstrates the capacity of MapR to ingest and process high speed streaming data. Depending on hardware, you will probably see MapR Streams processing more than 40,000 messages per second in this step.
 
@@ -235,7 +235,7 @@ Drill can also be used to load data from MapR-DB into data science notebooks. Ex
 
 ## Step 11 (Optional) - Explore Machine Learning techniques for Predictive Maintenance
 
-This tutorial focuses on data engineering - i.e. getting data in the right format and in the right place in order to take advantage of machine learning (ML) for predictive maintenance applications. The details of ML are beyond the scope of this tutorial but we've including a few python notebooks to illustrate common ML techniques for detecting anomolies and predicting machine failures using time-series data stored in flat files, OpenTSDB, and/or MapR-DB.
+This tutorial focuses on data engineering - i.e. getting data in the right format and in the right place in order to take advantage of machine learning (ML) for predictive maintenance applications. The details of ML are beyond the scope of this tutorial but we've including a few python notebooks to illustrate common ML techniques for detecting anomalies and predicting machine failures using time-series data stored in flat files, OpenTSDB, and/or MapR-DB.
 
 ### LSTM predictions for "About To Fail"
 
