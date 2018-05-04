@@ -184,7 +184,7 @@ java -cp ~/predictive-maintenance/target/predictive-maintenance-1.0-jar-with-dep
 ```
 ### Why are we simulating a vibration sensor?
 
-![vibration analysis](/images/tuning_fork.gif?raw=true "Vibration analysis")
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/tuning_fork.gif" width="50%">
 
 Degradation in machines often manifests itself as a low rumble or a small shake. These unusual vibrations give you the first clue that a machine is nearing the end of its useful life, so it's very important to detect those anomolies. Vibration sensors measure the displacement or velocity of motion thousands of times per second. Analyzing those signals is typically done in the frequency domain. An algorithm called "fast Fourier transform" (FFT) can sample time-series vibration data and identify its component frequencies. In the next step you will run a command the converts the simulated vibration data to the frequency domain with an FFT and raises alarms when vibration frequencies vary more than a predefined threshold.
 
