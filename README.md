@@ -178,10 +178,17 @@ Here's an example of querying IoT data records table with Drill:
 
 ## Step 7 - Synthesize a high speed data stream:
 
-This stream simulates time-series amplitudes of a vibration signal, at one sample every 10ms.
+This command simulates a high speed data stream from a vibration sensor sampling once per 10ms.
 ```
 java -cp ~/predictive-maintenance/target/predictive-maintenance-1.0-jar-with-dependencies.jar com.mapr.examples.HighSpeedProducer /apps/fastdata:vibrations 10
 ```
+### Why are we simulating a vibration sensor?
+
+![vibration analysis](/images/tuning_fork.gif?raw=true "Vibration analysis")
+
+Degradation in machines often manifests itself as a low rumble or a small shake. These unusual vibrations give you the first clue that a machine is nearing the end of its useful life, so it's very important to detect those anomolies. Vibration sensors measure the displacement or velocity of motion thousands of times per second. Analyzing those signals is typically done in the frequency domain. An algorithm called "fast Fourier transform" (FFT) can sample time-series vibration data and identify its component frequencies. In the next step you will run a command the converts the simulated vibration data to the frequency domain with an FFT and raises alarms when vibration frequencies vary more than a predefined threshold.
+
+This demonstrates the capacity of MapR to ingest and process high speed streaming data.
 
 ## Step 8 - Process high speed data stream:
 
