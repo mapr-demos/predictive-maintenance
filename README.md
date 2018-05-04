@@ -188,7 +188,7 @@ Degradation in machines often manifests itself as a low rumble or a small shake.
 
 This demonstrates the capacity of MapR to ingest and process high speed streaming data.
 
-<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/tuning_fork.gif" width="50%">
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/tuning_fork.gif" width="30%">
 
 ## Step 8 - Process high speed data stream:
 
