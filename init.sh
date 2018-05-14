@@ -25,6 +25,8 @@ sudo apt-get install mapr-opentsdb -y
 sudo apt-get install mapr-grafana -y
 
 # Enabled write access to opentsdb
+sudo echo "tsd.http.request.cors_domains=*" >> /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf 
+sudo echo "tsd.core.meta.enable_tsuid_incrementing = true" >> /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf 
 sudo cat /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf | sed "s/#tsd.mode = ro/tsd.mode = rw/g" > /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf.new
 sudo mv /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf.new /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf
 sudo chown mapr:mapr /opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf
