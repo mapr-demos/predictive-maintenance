@@ -122,7 +122,13 @@ After you have run that command you should be able to visualize the streaming Io
 
 <img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/grafana_screenshot_2.png" width="50%" align="center">
 
-2. ***Factory Monitoring Software*** - This factory diagnositics mock-up displays real-time HVAC data with a serverless HTML5 file that should work in any web browser. Update the `OPENTSDB_HOST` variable at the top of [webapp/BuildingControl.html](https://github.com/mapr-demos/predictive-maintenance/blob/master/webapp/BuildingControl.html), then open it in a web browser.
+2. ***Factory Monitoring Software*** - This factory mock-up displays real-time HVAC data with an HTML file that should work in any web browser. Update the `OPENTSDB_HOST` variable at the top of [webapp/BuildingControl.html](https://github.com/mapr-demos/predictive-maintenance/blob/master/webapp/BuildingControl.html), then open it in a web browser. If you do not see data, be sure you have added the following three lines to `/opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf`:
+
+```
+tsd.core.meta.enable_tsuid_incrementing = true
+tsd.http.request.cors_domains=*
+tsd.mode = ro/tsd.mode = rw
+```
 
 <img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/BuildingControl.png" width="50%" align="center">
 
