@@ -26,9 +26,17 @@ In summary:
 There are two objectives relating to predictive maintenance implemented in this project. The first objective is to visualize time-series data in an interactive real-time dashboard in Grafana. The second objective is to make raw data streams and derived features available to machine learning frameworks, such as Tensorflow, in order to develop algorithms for anomaly detection and predictive maintenance. These two objects are realized using two seperate data flows:
 
 1. The first flow, located on the top half of the image below, is intended to persist IoT data and label training data for sequence prediction and anomaly detection of time-series data in Tensorflow. 
+
+![BI data pipeline](/images/bi_pipeline.png?raw=true "BI Data Pipeline")
+
 2. The second flow, located on the bottom half, is intended to persist time-series IoT data in OpenTSDB for visualization in a Grafana dashboard. 
 
-![data flow diagram](/images/dataflow.png?raw=true "Data Flow")
+![ML data pipeline](/images/ml_pipeline.png?raw=true "ML Data Pipeline")
+
+Put together, these data pipelines look like this:
+
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/dataflow.png" width="50%">
+
 
 # Preliminary Steps
 
@@ -38,7 +46,7 @@ These steps explain how to setup this tutorial using the [MapR Container for Dev
 
 This tutorial requires a lot of memory. We recommend allocating 12GB RAM, 4GB swap, and 2 CPUs to the Docker Community Edition for MacOS.
 
-<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/docker_config.png" width="50%">
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/docker_config.png" width="40%">
 
 
 ## Start the MapR sandbox
@@ -193,6 +201,8 @@ java -cp ~/predictive-maintenance/target/predictive-maintenance-1.0-jar-with-dep
 ### Why are we simulating a vibration sensor?
 
 Degradation in machines often manifests itself as a low rumble or a small shake. These unusual vibrations give you the first clue that a machine is nearing the end of its useful life, so it's very important to detect those anomalies. Vibration sensors measure the displacement or velocity of motion thousands of times per second. Analyzing those signals is typically done in the frequency domain. An algorithm called "fast Fourier transform" (FFT) can sample time-series vibration data and identify its component frequencies. In the next step you will run a command the converts the simulated vibration data to the frequency domain with an FFT and raises alarms when vibration frequencies vary more than a predefined threshold.
+
+![vibration analysis](/images/vibration_analysis.png?raw=true "Vibration Analysis")
 
 This demonstrates the capacity of MapR to ingest and process high speed streaming data. Depending on hardware, you will probably see MapR Streams processing more than 40,000 messages per second in this step.
 
