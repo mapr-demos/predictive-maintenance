@@ -27,13 +27,13 @@ There are two objectives relating to predictive maintenance implemented in this 
 
 1. The first flow, located on the top half of the image below, is intended to persist IoT data and label training data for sequence prediction and anomaly detection of time-series data in Tensorflow. 
 
-![BI data pipeline](/images/bi_pipeline.png?raw=true "BI Data Pipeline")
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/bi_pipeline.png" width="50%">
 
 2. The second flow, located on the bottom half, is intended to persist time-series IoT data in OpenTSDB for visualization in a Grafana dashboard. 
 
-![ML data pipeline](/images/ml_pipeline.png?raw=true "ML Data Pipeline")
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/ml_pipeline.png" width="50%">
 
-Put together, these data pipelines look like this:
+Put together, these data pipelines look like this. The APIs used for reading and writing data are shown in red.
 
 <img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/dataflow.png" width="50%">
 
