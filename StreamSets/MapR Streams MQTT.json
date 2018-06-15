@@ -2,10 +2,10 @@
   "pipelineConfig" : {
     "schemaVersion" : 5,
     "version" : 7,
-    "pipelineId" : "MapRStreamsMQTT53d751ab-0c74-499e-8b1b-ace8b1fd580c",
+    "pipelineId" : "MapRStreamsMQTTd306b4b4-1912-46b0-8787-4c73a1e092cc",
     "title" : "MapR Streams MQTT",
     "description" : "",
-    "uuid" : "6c4c9eb8-7e60-496b-a381-eee51dd45aa3",
+    "uuid" : "00bf8f7f-bb82-420c-9d69-54efa477d08a",
     "configuration" : [ {
       "name" : "executionMode",
       "value" : "STANDALONE"
@@ -308,7 +308,7 @@
         "value" : "streamsetsDataCollector"
       }, {
         "name" : "conf.topicList",
-        "value" : [ "/apps/mqtt:opto22" ]
+        "value" : [ "/apps/factory:mqtt" ]
       }, {
         "name" : "conf.produceSingleRecordPerMessage",
         "value" : false
@@ -615,7 +615,7 @@
         "value" : "JSON"
       }, {
         "name" : "conf.resourceUrl",
-        "value" : "http://localhost:4242/api/put"
+        "value" : "http://10.0.0.11:4242/api/put"
       }, {
         "name" : "conf.headers",
         "value" : [ ]
@@ -836,22 +836,22 @@
       "services" : [ ]
     },
     "info" : {
-      "pipelineId" : "MapRStreamsMQTT53d751ab-0c74-499e-8b1b-ace8b1fd580c",
+      "pipelineId" : "MapRStreamsMQTTd306b4b4-1912-46b0-8787-4c73a1e092cc",
       "title" : "MapR Streams MQTT",
       "description" : "",
-      "created" : 1522883485052,
-      "lastModified" : 1522883606852,
+      "created" : 1529043025472,
+      "lastModified" : 1529043054069,
       "creator" : "admin",
       "lastModifier" : "admin",
       "lastRev" : "0",
-      "uuid" : "6c4c9eb8-7e60-496b-a381-eee51dd45aa3",
+      "uuid" : "00bf8f7f-bb82-420c-9d69-54efa477d08a",
       "valid" : true,
       "metadata" : {
         "labels" : [ ]
       },
-      "name" : "MapRStreamsMQTT53d751ab-0c74-499e-8b1b-ace8b1fd580c",
+      "name" : "MapRStreamsMQTTd306b4b4-1912-46b0-8787-4c73a1e092cc",
       "sdcVersion" : "3.0.2.0",
-      "sdcId" : "cbed78c4-385a-11e8-8011-75f7ea642507"
+      "sdcId" : "75548782-7062-11e8-83a7-63e8424259e9"
     },
     "metadata" : {
       "labels" : [ ]
@@ -979,7 +979,7 @@
       "valid" : false
     } ],
     "driftRuleDefinitions" : [ ],
-    "uuid" : "75d16b78-5812-47d3-aab5-e76ca972ec03",
+    "uuid" : "d9b6c9af-6a30-429d-88ee-d49ad35efee1",
     "configuration" : [ {
       "name" : "emailIDs",
       "value" : [ ]
@@ -988,10 +988,10 @@
       "value" : [ ]
     } ],
     "ruleIssues" : [ {
+      "ruleId" : "dataRule1516325868828",
       "additionalInfo" : {
         "property" : "condition"
       },
-      "ruleId" : "dataRule1516325868828",
       "message" : "VALIDATION_0040 - The data rule property 'condition' must be defined"
     } ],
     "configIssues" : [ ]
