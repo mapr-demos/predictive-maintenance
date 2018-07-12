@@ -95,7 +95,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_MAPRMONITORINGOPENTSDB}",
+          "datasource": "MaprMonitoringOpenTSDB",
           "fill": 1,
           "id": 6,
           "legend": {
@@ -183,7 +183,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_MAPRMONITORINGOPENTSDB}",
+          "datasource": "MaprMonitoringOpenTSDB",
           "fill": 1,
           "id": 4,
           "legend": {
@@ -266,7 +266,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_MAPRMONITORINGOPENTSDB}",
+          "datasource": "MaprMonitoringOpenTSDB",
           "fill": 1,
           "id": 9,
           "legend": {
@@ -355,7 +355,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_MAPRMONITORINGOPENTSDB}",
+          "datasource": "MaprMonitoringOpenTSDB",
           "fill": 1,
           "id": 8,
           "legend": {
@@ -442,7 +442,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${DS_MAPRMONITORINGOPENTSDB}",
+          "datasource": "MaprMonitoringOpenTSDB",
           "fill": 0,
           "id": 10,
           "legend": {
@@ -695,7 +695,7 @@
             "rgba(237, 129, 40, 0.89)",
             "rgba(50, 172, 45, 0.97)"
           ],
-          "datasource": "${DS_MAPRMONITORINGOPENTSDB}",
+          "datasource": "MaprMonitoringOpenTSDB",
           "format": "none",
           "gauge": {
             "maxValue": 100,
@@ -776,7 +776,7 @@
             "rgba(237, 129, 40, 0.89)",
             "rgba(50, 172, 45, 0.97)"
           ],
-          "datasource": "${DS_MAPRMONITORINGOPENTSDB}",
+          "datasource": "MaprMonitoringOpenTSDB",
           "format": "none",
           "gauge": {
             "maxValue": 100,
@@ -857,7 +857,7 @@
             "rgba(237, 129, 40, 0.89)",
             "rgba(50, 172, 45, 0.97)"
           ],
-          "datasource": "${DS_MAPRMONITORINGOPENTSDB}",
+          "datasource": "MaprMonitoringOpenTSDB",
           "format": "none",
           "gauge": {
             "maxValue": 100,
@@ -938,7 +938,7 @@
             "rgba(237, 129, 40, 0.89)",
             "rgba(50, 172, 45, 0.97)"
           ],
-          "datasource": "${DS_MAPRMONITORINGOPENTSDB}",
+          "datasource": "MaprMonitoringOpenTSDB",
           "format": "none",
           "gauge": {
             "maxValue": 100,
