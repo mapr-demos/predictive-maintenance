@@ -1,0 +1,22 @@
+[
+    {
+        "name": "cycle",
+        "class": "id",
+        "start": 0
+    },
+    {
+        "name": "s1",
+        "class": "int",
+        "min": 0,
+        "max": 50
+    },
+    {
+        "name": "s2",
+        "class": "int",
+        "min": 0,
+        "max": 5
+    },
+    {"name":"failure", "class":"int", "min":0, "max":1}
+
+]
+
