@@ -2,10 +2,10 @@
   "pipelineConfig" : {
     "schemaVersion" : 6,
     "version" : 10,
-    "pipelineId" : "MQTTFileTaila9d3ea04-e8b0-41ba-a8f7-e6b54047b0b0",
+    "pipelineId" : "MQTTFileTailab149e19-086e-4bd5-a2d4-1bdf55494637",
     "title" : "MQTT File Tail",
     "description" : "",
-    "uuid" : "16b4d668-70e4-4375-92f7-281d960cac8e",
+    "uuid" : "3e7e22fc-11dd-4532-9d65-65d05e4b51ed",
     "configuration" : [ {
       "name" : "executionMode",
       "value" : "STANDALONE"
@@ -713,13 +713,13 @@
         "value" : "NONE"
       }, {
         "name" : "conf.client.connectTimeoutMillis",
-        "value" : 5
+        "value" : 0
       }, {
         "name" : "conf.client.readTimeoutMillis",
-        "value" : 5
+        "value" : 0
       }, {
         "name" : "conf.client.numThreads",
-        "value" : 1
+        "value" : 5
       }, {
         "name" : "conf.client.authType",
         "value" : "NONE"
@@ -916,22 +916,22 @@
       "services" : [ ]
     },
     "info" : {
-      "pipelineId" : "MQTTFileTaila9d3ea04-e8b0-41ba-a8f7-e6b54047b0b0",
+      "pipelineId" : "MQTTFileTailab149e19-086e-4bd5-a2d4-1bdf55494637",
       "title" : "MQTT File Tail",
       "description" : "",
-      "created" : 1543558782985,
-      "lastModified" : 1543559147775,
+      "created" : 1543602521750,
+      "lastModified" : 1543603824685,
       "creator" : "admin",
       "lastModifier" : "admin",
       "lastRev" : "0",
-      "uuid" : "16b4d668-70e4-4375-92f7-281d960cac8e",
+      "uuid" : "3e7e22fc-11dd-4532-9d65-65d05e4b51ed",
       "valid" : true,
       "metadata" : {
         "labels" : [ ]
       },
-      "name" : "MQTTFileTaila9d3ea04-e8b0-41ba-a8f7-e6b54047b0b0",
+      "name" : "MQTTFileTailab149e19-086e-4bd5-a2d4-1bdf55494637",
       "sdcVersion" : "3.6.0",
-      "sdcId" : "d186c7bc-f467-11e8-a823-3d3ad3828044"
+      "sdcId" : "7b1a60c0-f4c9-11e8-9afd-510f1df97d95"
     },
     "metadata" : {
       "labels" : [ ]
@@ -1230,8 +1230,8 @@
     },
     "valid" : true,
     "issues" : {
-      "issueCount" : 0,
       "stageIssues" : { },
+      "issueCount" : 0,
       "pipelineIssues" : [ ]
     },
     "previewable" : true
@@ -1314,7 +1314,7 @@
       "valid" : false
     } ],
     "driftRuleDefinitions" : [ ],
-    "uuid" : "b90dbfa3-0420-413b-ad9e-8760ffe8cae0",
+    "uuid" : "f6234140-2d59-4ff0-86a1-7396e00395d2",
     "configuration" : [ {
       "name" : "emailIDs",
       "value" : [ ]
@@ -1322,14 +1322,14 @@
       "name" : "webhookConfigs",
       "value" : [ ]
     } ],
-    "configIssues" : [ ],
     "ruleIssues" : [ {
-      "ruleId" : "dataRule1516325868828",
       "additionalInfo" : {
         "property" : "condition"
       },
+      "ruleId" : "dataRule1516325868828",
       "message" : "VALIDATION_0040 - The data rule property 'condition' must be defined"
-    } ]
+    } ],
+    "configIssues" : [ ]
   },
   "libraryDefinitions" : null
 }
