@@ -1,11 +1,11 @@
 {
   "pipelineConfig" : {
-    "schemaVersion" : 6,
-    "version" : 10,
-    "pipelineId" : "MQTTFileTailff3f63c6-7063-46fe-9d4b-f619157414b7",
+    "schemaVersion" : 5,
+    "version" : 7,
+    "pipelineId" : "Opto22MQTTtoopentsdbmaprfscopybb08d054-dabe-4110-baa4-f47baec2a664",
     "title" : "MQTT File Tail",
     "description" : "",
-    "uuid" : "b92f0184-44a9-4893-9b88-9ae1dec3d7b6",
+    "uuid" : "207cd0d4-2d61-427f-8241-e64d674d980a",
     "configuration" : [ {
       "name" : "executionMode",
       "value" : "STANDALONE"
@@ -80,88 +80,7 @@
       "value" : [ ]
     }, {
       "name" : "statsAggregatorStage",
-      "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_StatsNullDTarget::1"
-    }, {
-      "name" : "testOriginStage",
-      "value" : "streamsets-datacollector-dev-lib::com_streamsets_pipeline_stage_devtest_rawdata_RawDataDSource::3"
-    }, {
-      "name" : "runnerIdleTIme",
-      "value" : 60
-    }, {
-      "name" : "edgeHttpUrl",
-      "value" : "http://localhost:18633"
-    }, {
-      "name" : "logLevel",
-      "value" : "INFO"
-    }, {
-      "name" : "amazonEMRConfig.userRegion",
-      "value" : null
-    }, {
-      "name" : "amazonEMRConfig.userRegionCustom",
-      "value" : null
-    }, {
-      "name" : "amazonEMRConfig.s3StagingUri",
-      "value" : null
-    }, {
-      "name" : "amazonEMRConfig.clusterPrefix",
-      "value" : null
-    }, {
-      "name" : "amazonEMRConfig.clusterId",
-      "value" : null
-    }, {
-      "name" : "amazonEMRConfig.terminateCluster",
-      "value" : false
-    }, {
-      "name" : "amazonEMRConfig.enableEMRDebugging",
-      "value" : true
-    }, {
-      "name" : "amazonEMRConfig.s3LogUri",
-      "value" : null
-    }, {
-      "name" : "amazonEMRConfig.serviceRole",
-      "value" : "EMR_DefaultRole"
-    }, {
-      "name" : "amazonEMRConfig.jobFlowRole",
-      "value" : "EMR_EC2_DefaultRole"
-    }, {
-      "name" : "amazonEMRConfig.visibleToAllUsers",
-      "value" : true
-    }, {
-      "name" : "amazonEMRConfig.loggingEnabled",
-      "value" : true
-    }, {
-      "name" : "amazonEMRConfig.ec2SubnetId",
-      "value" : null
-    }, {
-      "name" : "amazonEMRConfig.masterSecurityGroup",
-      "value" : null
-    }, {
-      "name" : "amazonEMRConfig.slaveSecurityGroup",
-      "value" : null
-    }, {
-      "name" : "amazonEMRConfig.instanceCount",
-      "value" : 2
-    }, {
-      "name" : "amazonEMRConfig.masterInstanceType",
-      "value" : null
-    }, {
-      "name" : "amazonEMRConfig.slaveInstanceType",
-      "value" : null
-    }, {
-      "name" : "amazonEMRConfig.masterInstanceTypeCustom",
-      "value" : null
-    }, {
-      "name" : "amazonEMRConfig.slaveInstanceTypeCustom",
-      "value" : null
-    }, {
-      "name" : "amazonEMRConfig.accessKey",
-      "value" : null
-    }, {
-      "name" : "amazonEMRConfig.secretKey",
-      "value" : null
-    }, {
-      "name" : "amazonEMRConfig.provisionNewCluster",
-      "value" : false
+      "value" : ""
     } ],
     "uiInfo" : {
       "previewConfig" : {
@@ -175,7 +94,6 @@
         "rememberMe" : false
       }
     },
-    "fragments" : [ ],
     "stages" : [ {
       "instanceName" : "FileTail_01",
       "library" : "streamsets-datacollector-basic-lib",
@@ -393,13 +311,13 @@
         "value" : 1000
       }, {
         "name" : "conf.maxWaitTimeSecs",
-        "value" : 1
+        "value" : 5
       }, {
         "name" : "conf.fileInfos",
         "value" : [ {
           "fileRollMode" : "REVERSE_COUNTER",
           "patternForToken" : ".*",
-          "fileFullPath" : "/tmp/here.json"
+          "fileFullPath" : "/mapr/my.cluster.com/tmp/out/mqtt_input"
         } ]
       }, {
         "name" : "conf.allowLateDirectories",
@@ -413,9 +331,6 @@
       }, {
         "name" : "stageOnRecordError",
         "value" : "TO_ERROR"
-      }, {
-        "name" : "conf.dataFormatConfig.excelHeader",
-        "value" : null
       } ],
       "uiInfo" : {
         "outputStreamLabels" : [ "Data", "Metadata" ],
@@ -464,7 +379,7 @@
       "uiInfo" : {
         "description" : "Select metrics from MQTT and add JSON fields for opentsdb's REST API",
         "label" : "Parse MQTT JSON",
-        "xPos" : 279,
+        "xPos" : 280,
         "yPos" : 40,
         "stageType" : "PROCESSOR"
       },
@@ -689,7 +604,7 @@
         "value" : "JSON"
       }, {
         "name" : "conf.resourceUrl",
-        "value" : "http://hbase:4242/api/put?summary"
+        "value" : "http://localhost:4242/api/put"
       }, {
         "name" : "conf.headers",
         "value" : [ ]
@@ -701,7 +616,7 @@
         "value" : null
       }, {
         "name" : "conf.requestBody",
-        "value" : "{\"metric\": \"${record:value('/metric')}\", \"timestamp\": ${record:value('/timestamp')}, \"value\": ${record:value('/value')}, \"tags\": {\"host\": \"web01\"}}"
+        "value" : "{\"metric\": \"${record:value('/metric')}\", \"timestamp\": ${record:value('/timestamp')}, \"value\": ${record:value('/value')}, \"tags\": {\"host\": \"Opto22/POC/MapR/HVAC\"}}"
       }, {
         "name" : "conf.defaultRequestContentType",
         "value" : "application/json"
@@ -861,12 +776,6 @@
       }, {
         "name" : "stageRecordPreconditions",
         "value" : [ ]
-      }, {
-        "name" : "conf.dataFormatConfig.compression",
-        "value" : "NONE"
-      }, {
-        "name" : "conf.dataFormatConfig.excelHeader",
-        "value" : null
       } ],
       "uiInfo" : {
         "description" : "",
@@ -888,8 +797,8 @@
       "uiInfo" : {
         "description" : "",
         "label" : "Trash 1",
-        "xPos" : 735,
-        "yPos" : 110,
+        "xPos" : 720,
+        "yPos" : 40,
         "stageType" : "TARGET"
       },
       "inputLanes" : [ "HTTPClient_02OutputLane15163426310630", "FileTail_01OutputLane15209855239131" ],
@@ -916,44 +825,27 @@
       "services" : [ ]
     },
     "info" : {
-      "pipelineId" : "MQTTFileTailff3f63c6-7063-46fe-9d4b-f619157414b7",
+      "pipelineId" : "Opto22MQTTtoopentsdbmaprfscopybb08d054-dabe-4110-baa4-f47baec2a664",
       "title" : "MQTT File Tail",
       "description" : "",
-      "created" : 1543524212743,
-      "lastModified" : 1543530255691,
+      "created" : 1520985495865,
+      "lastModified" : 1522706002504,
       "creator" : "admin",
       "lastModifier" : "admin",
       "lastRev" : "0",
-      "uuid" : "b92f0184-44a9-4893-9b88-9ae1dec3d7b6",
+      "uuid" : "207cd0d4-2d61-427f-8241-e64d674d980a",
       "valid" : true,
       "metadata" : {
         "labels" : [ ]
       },
-      "name" : "MQTTFileTailff3f63c6-7063-46fe-9d4b-f619157414b7",
-      "sdcVersion" : "3.6.0",
-      "sdcId" : "5b1dba64-f417-11e8-8aaf-371ea17ab873"
+      "name" : "Opto22MQTTtoopentsdbmaprfscopybb08d054-dabe-4110-baa4-f47baec2a664",
+      "sdcVersion" : "3.0.2.0",
+      "sdcId" : "f1566ca4-1270-11e8-bcb3-6ddbfb368c15"
     },
     "metadata" : {
       "labels" : [ ]
     },
-    "statsAggregatorStage" : {
-      "instanceName" : "Discard_StatsAggregatorStage",
-      "library" : "streamsets-datacollector-basic-lib",
-      "stageName" : "com_streamsets_pipeline_stage_destination_devnull_StatsNullDTarget",
-      "stageVersion" : "1",
-      "configuration" : [ ],
-      "uiInfo" : {
-        "description" : "",
-        "label" : "Stats Aggregator - Discard",
-        "xPos" : 940,
-        "yPos" : 50,
-        "stageType" : "TARGET"
-      },
-      "inputLanes" : [ ],
-      "outputLanes" : [ ],
-      "eventLanes" : [ ],
-      "services" : [ ]
-    },
+    "statsAggregatorStage" : null,
     "startEventStages" : [ {
       "instanceName" : "Discard_StartEventStage",
       "library" : "streamsets-datacollector-basic-lib",
@@ -990,244 +882,6 @@
       "eventLanes" : [ ],
       "services" : [ ]
     } ],
-    "testOriginStage" : {
-      "instanceName" : "com_streamsets_pipeline_stage_devtest_rawdata_RawDataDSource_TestOriginStage",
-      "library" : "streamsets-datacollector-dev-lib",
-      "stageName" : "com_streamsets_pipeline_stage_devtest_rawdata_RawDataDSource",
-      "stageVersion" : "3",
-      "configuration" : [ {
-        "name" : "rawData",
-        "value" : "{\n  \"f1\": \"abc\",\n  \"f2\": \"xyz\",\n  \"f3\": \"lmn\"\n}"
-      }, {
-        "name" : "stopAfterFirstBatch",
-        "value" : false
-      }, {
-        "name" : "stageOnRecordError",
-        "value" : "TO_ERROR"
-      } ],
-      "uiInfo" : {
-        "stageType" : "SOURCE",
-        "label" : "Test Origin - Dev Raw Data Source"
-      },
-      "inputLanes" : [ ],
-      "outputLanes" : [ "com_streamsets_pipeline_stage_devtest_rawdata_RawDataDSource_TestOriginStageOutputLane1" ],
-      "eventLanes" : [ ],
-      "services" : [ {
-        "service" : "com.streamsets.pipeline.api.service.dataformats.DataFormatParserService",
-        "serviceVersion" : 1,
-        "configuration" : [ {
-          "name" : "displayFormats",
-          "value" : "DELIMITED,JSON,LOG,SDC_JSON,TEXT,XML"
-        }, {
-          "name" : "dataFormat",
-          "value" : "JSON"
-        }, {
-          "name" : "dataFormatConfig.compression",
-          "value" : "NONE"
-        }, {
-          "name" : "dataFormatConfig.filePatternInArchive",
-          "value" : "*"
-        }, {
-          "name" : "dataFormatConfig.charset",
-          "value" : "UTF-8"
-        }, {
-          "name" : "dataFormatConfig.removeCtrlChars",
-          "value" : false
-        }, {
-          "name" : "dataFormatConfig.textMaxLineLen",
-          "value" : 1024
-        }, {
-          "name" : "dataFormatConfig.useCustomDelimiter",
-          "value" : false
-        }, {
-          "name" : "dataFormatConfig.customDelimiter",
-          "value" : "\\r\\n"
-        }, {
-          "name" : "dataFormatConfig.includeCustomDelimiterInTheText",
-          "value" : false
-        }, {
-          "name" : "dataFormatConfig.jsonContent",
-          "value" : "MULTIPLE_OBJECTS"
-        }, {
-          "name" : "dataFormatConfig.jsonMaxObjectLen",
-          "value" : 4096
-        }, {
-          "name" : "dataFormatConfig.csvFileFormat",
-          "value" : "CSV"
-        }, {
-          "name" : "dataFormatConfig.csvHeader",
-          "value" : "NO_HEADER"
-        }, {
-          "name" : "dataFormatConfig.csvAllowExtraColumns",
-          "value" : false
-        }, {
-          "name" : "dataFormatConfig.csvExtraColumnPrefix",
-          "value" : "_extra_"
-        }, {
-          "name" : "dataFormatConfig.csvMaxObjectLen",
-          "value" : 1024
-        }, {
-          "name" : "dataFormatConfig.csvCustomDelimiter",
-          "value" : "|"
-        }, {
-          "name" : "dataFormatConfig.csvCustomEscape",
-          "value" : "\\"
-        }, {
-          "name" : "dataFormatConfig.csvCustomQuote",
-          "value" : "\""
-        }, {
-          "name" : "dataFormatConfig.csvEnableComments",
-          "value" : false
-        }, {
-          "name" : "dataFormatConfig.csvCommentMarker",
-          "value" : "#"
-        }, {
-          "name" : "dataFormatConfig.csvIgnoreEmptyLines",
-          "value" : false
-        }, {
-          "name" : "dataFormatConfig.csvRecordType",
-          "value" : "LIST_MAP"
-        }, {
-          "name" : "dataFormatConfig.csvSkipStartLines",
-          "value" : 0
-        }, {
-          "name" : "dataFormatConfig.parseNull",
-          "value" : false
-        }, {
-          "name" : "dataFormatConfig.nullConstant",
-          "value" : "\\\\N"
-        }, {
-          "name" : "dataFormatConfig.xmlRecordElement",
-          "value" : null
-        }, {
-          "name" : "dataFormatConfig.includeFieldXpathAttributes",
-          "value" : false
-        }, {
-          "name" : "dataFormatConfig.xPathNamespaceContext",
-          "value" : [ ]
-        }, {
-          "name" : "dataFormatConfig.outputFieldAttributes",
-          "value" : false
-        }, {
-          "name" : "dataFormatConfig.xmlMaxObjectLen",
-          "value" : 4096
-        }, {
-          "name" : "dataFormatConfig.logMode",
-          "value" : "COMMON_LOG_FORMAT"
-        }, {
-          "name" : "dataFormatConfig.logMaxObjectLen",
-          "value" : 1024
-        }, {
-          "name" : "dataFormatConfig.retainOriginalLine",
-          "value" : false
-        }, {
-          "name" : "dataFormatConfig.customLogFormat",
-          "value" : "%h %l %u %t \"%r\" %>s %b"
-        }, {
-          "name" : "dataFormatConfig.regex",
-          "value" : "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(\\S+) (\\S+) (\\S+)\" (\\d{3}) (\\d+)"
-        }, {
-          "name" : "dataFormatConfig.fieldPathsToGroupName",
-          "value" : [ {
-            "fieldPath" : "/",
-            "group" : 1
-          } ]
-        }, {
-          "name" : "dataFormatConfig.grokPatternDefinition",
-          "value" : null
-        }, {
-          "name" : "dataFormatConfig.grokPattern",
-          "value" : "%{COMMONAPACHELOG}"
-        }, {
-          "name" : "dataFormatConfig.onParseError",
-          "value" : "ERROR"
-        }, {
-          "name" : "dataFormatConfig.maxStackTraceLines",
-          "value" : 50
-        }, {
-          "name" : "dataFormatConfig.enableLog4jCustomLogFormat",
-          "value" : false
-        }, {
-          "name" : "dataFormatConfig.log4jCustomLogFormat",
-          "value" : "%r [%t] %-5p %c %x - %m%n"
-        }, {
-          "name" : "dataFormatConfig.avroSchemaSource",
-          "value" : null
-        }, {
-          "name" : "dataFormatConfig.avroSchema",
-          "value" : null
-        }, {
-          "name" : "dataFormatConfig.schemaRegistryUrls",
-          "value" : [ ]
-        }, {
-          "name" : "dataFormatConfig.schemaLookupMode",
-          "value" : "SUBJECT"
-        }, {
-          "name" : "dataFormatConfig.subject",
-          "value" : null
-        }, {
-          "name" : "dataFormatConfig.schemaId",
-          "value" : null
-        }, {
-          "name" : "dataFormatConfig.protoDescriptorFile",
-          "value" : null
-        }, {
-          "name" : "dataFormatConfig.messageType",
-          "value" : null
-        }, {
-          "name" : "dataFormatConfig.isDelimited",
-          "value" : false
-        }, {
-          "name" : "dataFormatConfig.binaryMaxObjectLen",
-          "value" : 1024
-        }, {
-          "name" : "dataFormatConfig.datagramMode",
-          "value" : "SYSLOG"
-        }, {
-          "name" : "dataFormatConfig.typesDbPath",
-          "value" : null
-        }, {
-          "name" : "dataFormatConfig.convertTime",
-          "value" : false
-        }, {
-          "name" : "dataFormatConfig.excludeInterval",
-          "value" : false
-        }, {
-          "name" : "dataFormatConfig.authFilePath",
-          "value" : null
-        }, {
-          "name" : "dataFormatConfig.netflowOutputValuesMode",
-          "value" : "RAW_AND_INTERPRETED"
-        }, {
-          "name" : "dataFormatConfig.maxTemplateCacheSize",
-          "value" : -1
-        }, {
-          "name" : "dataFormatConfig.templateCacheTimeoutMs",
-          "value" : -1
-        }, {
-          "name" : "dataFormatConfig.netflowOutputValuesModeDatagram",
-          "value" : "RAW_AND_INTERPRETED"
-        }, {
-          "name" : "dataFormatConfig.maxTemplateCacheSizeDatagram",
-          "value" : -1
-        }, {
-          "name" : "dataFormatConfig.templateCacheTimeoutMsDatagram",
-          "value" : -1
-        }, {
-          "name" : "dataFormatConfig.wholeFileMaxObjectLen",
-          "value" : 8192
-        }, {
-          "name" : "dataFormatConfig.rateLimit",
-          "value" : "-1"
-        }, {
-          "name" : "dataFormatConfig.verifyChecksum",
-          "value" : false
-        }, {
-          "name" : "dataFormatConfig.excelHeader",
-          "value" : null
-        } ]
-      } ]
-    },
     "valid" : true,
     "issues" : {
       "pipelineIssues" : [ ],
@@ -1314,7 +968,7 @@
       "valid" : false
     } ],
     "driftRuleDefinitions" : [ ],
-    "uuid" : "7c8d88a3-77e6-4ff2-a044-de89cf46fd61",
+    "uuid" : "18225764-db2b-4b0b-8602-b13be616682a",
     "configuration" : [ {
       "name" : "emailIDs",
       "value" : [ ]
@@ -1323,10 +977,10 @@
       "value" : [ ]
     } ],
     "ruleIssues" : [ {
+      "ruleId" : "dataRule1516325868828",
       "additionalInfo" : {
         "property" : "condition"
       },
-      "ruleId" : "dataRule1516325868828",
       "message" : "VALIDATION_0040 - The data rule property 'condition' must be defined"
     } ],
     "configIssues" : [ ]
