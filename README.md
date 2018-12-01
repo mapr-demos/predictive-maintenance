@@ -250,14 +250,19 @@ SELECT * from x WHERE _Chiller1AboutToFail = 'true' and fault = 1;
 
 Drill can also be used to load data from MapR-DB into data science notebooks. Examples of this are shown in the following section.
 
-## Step 11 (Optional) - Explore Machine Learning techniques for Predictive Maintenance
+## References for Machine Learning techniques for Predictive Maintenance
 
 This tutorial focuses on data engineering - i.e. getting data in the right format and in the right place in order to take advantage of machine learning (ML) for predictive maintenance applications. The details of ML are beyond the scope of this tutorial but we've including a few python notebooks to illustrate common ML techniques for detecting anomalies and predicting machine failures using time-series data stored in flat files, OpenTSDB, and/or MapR-DB.
+
 
 ### LSTM predictions for "About To Fail"
 
 This notebook shows how to train a binary classification model using an LSTM neural network in Keras to predict whether a failure will occur in an airplane engine within the next 30 seconds.
 ![lstm-about_to_fail](/images/lstm-about_to_fail.png?raw=true "LSTM Binary Classification Model")
+
+If you want to actually try this out using synthesized factory iot data, then follow the instructions in this notebook:
+[https://github.com/mapr-demos/predictive-maintenance/blob/master/notebooks/jupyter/LSTM%20For%20Predictive%20Maintenance-ian01.ipynb](https://github.com/mapr-demos/predictive-maintenance/blob/master/notebooks/jupyter/LSTM%20For%20Predictive%20Maintenance-ian01.ipynb)
+
 
 ### LSTM predictions for "Remaining Useful Life"
 
@@ -279,3 +284,48 @@ This notebook is the same as the last one, except it shows how to build an RNN m
 This notebook is the same as the last one, except it loads time-series data from MapR-DB instead of OpenTSDB.
 ![rnn-zeppelin](/images/rnn-zeppelin.png?raw=true "RNN Time-Series Forecasting for MapR-DB")
 
+## References for StreamSets
+
+To give you an idea of what dataflow management tools do, I’ve prepared a simple StreamSets project that you can run on a laptop with Docker. This project demonstrates a pipeline that streams time-series data recorded from an industrial HVAC system into OpenTSDB for visualization in Grafana. 
+
+Create a docker network to bridge containers:
+```
+docker network create mynetwork
+```
+
+Start StreamSets, OpenTSDB, and Grafana:
+```
+docker run -it -p 18630:18630 -d --name sdc --network mynetwork \
+streamsets/datacollector
+docker run -dp 4242:4242 --name hbase --network mynetwork \
+petergrace/opentsdb-docker
+docker run -d -p 3000:3000 --name grafana --network mynetwork \
+grafana/grafana
+```
+
+Open Grafana at http://localhost:3000 and login with admin / admin
+
+Add http://hbase:4242 as an OpenTSDB datasource to Grafana. If you don’t know how to add a data source, refer to Grafana docs. Your datasource definition should look like this:
+
+Download the following Grafana dashboard file:
+https://github.com/mapr-demos/predictive-maintenance/blob/master/Grafana/IoT_dashboard.json 
+
+Import that file into Grafana. If you don’t know how to import a dashboard, see Grafana docs.
+
+Download, unzip, and copy the following HVAC data to the StreamSets container:
+https://github.com/mapr-demos/predictive-maintenance/blob/master/sample_dataset/mqtt.json.gz
+```
+unzip mqtt.json.gz
+docker cp mqtt.json sdc:/tmp/mqtt.json
+```
+
+Open StreamSets at http://localhost:18630 and login with admin / admin
+
+Download and import the following pipeline into StreamSets. If you don’t know how to import a pipeline, refer to StreamSets docs.
+https://github.com/mapr-demos/predictive-maintenance/blob/master/StreamSets/MQTT%20File%20Tail.json 
+
+You will see a warning about a missing library in the “Parse MQTT JSON” stage. Click that stage and follow the instructions to install the Jython library.
+
+Finally, run the StreamSets pipeline.
+
+Hopefully, by setting up this pipeline and exploring StreamSets you’ll get the gist of what dataflow management tools can do.
