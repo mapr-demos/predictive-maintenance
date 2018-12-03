@@ -252,9 +252,7 @@ Drill can also be used to load data from MapR-DB into data science notebooks. Ex
 
 ## References for Machine Learning techniques for Predictive Maintenance
 
-This tutorial focuses on data engineering - i.e. getting data in the right format and in the right place in order to take advantage of machine learning (ML) for predictive maintenance applications. The details of ML are beyond the scope of this tutorial but to better understand ML techniques commonly used for predictive maintenance, check out the following notebook, which not only talks about how to use LSTM but also how to generate a sample dataset with [logsynth](https://github.com/tdunning/log-synth) that resembles what you might see in a real factory. You'll love this notebook because it explains how you can experiment with LSTM for predictive maintenance entirely on your laptop:
-
-[https://github.com/mapr-demos/predictive-maintenance/blob/master/notebooks/jupyter/LSTM%20For%20Predictive%20Maintenance-ian01.ipynb](https://github.com/mapr-demos/predictive-maintenance/blob/master/notebooks/jupyter/LSTM%20For%20Predictive%20Maintenance-ian01.ipynb)
+This tutorial focuses on data engineering - i.e. getting data in the right format and in the right place in order to take advantage of machine learning (ML) for predictive maintenance applications. The details of ML are beyond the scope of this tutorial but to better understand ML techniques commonly used for predictive maintenance, check out the [Jupyter notebook for LSTM]((https://github.com/mapr-demos/predictive-maintenance/blob/master/notebooks/jupyter/LSTM%20For%20Predictive%20Maintenance-ian01.ipynb). This notebook not only talks about how to use LSTM but also how to generate a sample dataset with [logsynth](https://github.com/tdunning/log-synth) that resembles what you might see in a real factory. This notebook is great because it explains how to experiment with LSTMs entirely on your laptop.
 
 ![lstm-about_to_fail](/images/lstm-about_to_fail-50.png?raw=true "LSTM About To Fail prediction")
 
