@@ -124,23 +124,9 @@ Update `localhost:4242` with the hostname and port of your OpenTSDB server befor
 /opt/mapr/kafka/kafka-*/bin/kafka-console-consumer.sh --new-consumer --topic /apps/factory:mqtt --bootstrap-server not.applicable:0000 | while read line; do echo $line | jq -r "to_entries | map(\"\(.key) \(.value | tostring)\") | {t: .[0], x: .[]} | .[]" | paste -d ' ' - - | awk '{system("curl -X POST --data \x27{\"metric\": \""$3"\", \"timestamp\": "$2", \"value\": "$4", \"tags\": {\"host\": \"localhost\"}}\x27 http://localhost:4242/api/put")}'; echo -n "."; done
 ```
 
-After you have run that command you should be able to visualize the streaming IoT data. There are two ways to visualize this data:
-
-1. ***Time-Series Dashboard*** - Depending on where you have installed Grafana, this can be opened with a URL like [http://maprdemo:3000](http://maprdemo:3000)
+After you have run that command you should be able to visualize the streaming IoT data in Grafana.  Depending on where you have installed Grafana, this can be opened with a URL like [http://maprdemo:3000](http://maprdemo:3000):
 
 <img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/grafana_screenshot_2.png" width="50%" align="center">
-
-2. ***Factory Monitoring Software*** - SKIP THIS STEP. IT DOESN'T ALWAYS WORK. ~~This factory mock-up displays real-time HVAC data with an HTML file that should work in any web browser. `cd` to the `webapp/` directory, update the `OPENTSDB_HOST` variable at the top of [webapp/BuildingControl.html](https://github.com/mapr-demos/predictive-maintenance/blob/master/webapp/BuildingControl.html), then open it in a web browser. If you do not see data then be sure you have added the following three lines to `/opt/mapr/opentsdb/opentsdb-2.4.0/etc/opentsdb/opentsdb.conf`:~~
-
-```
-tsd.core.meta.enable_tsuid_incrementing = true
-tsd.http.request.cors_domains=*
-tsd.mode = ro/tsd.mode = rw
-```
-
-
-<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/BuildingControl.png" width="50%" align="center">
-
 
 ## Step 4 - Update lagging features in MapR-DB for each failure event:
 
