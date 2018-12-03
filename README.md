@@ -252,39 +252,20 @@ Drill can also be used to load data from MapR-DB into data science notebooks. Ex
 
 ## References for Machine Learning techniques for Predictive Maintenance
 
-This tutorial focuses on data engineering - i.e. getting data in the right format and in the right place in order to take advantage of machine learning (ML) for predictive maintenance applications. The details of ML are beyond the scope of this tutorial but we've including a few python notebooks to illustrate common ML techniques for detecting anomalies and predicting machine failures using time-series data stored in flat files, OpenTSDB, and/or MapR-DB.
+This tutorial focuses on data engineering - i.e. getting data in the right format and in the right place in order to take advantage of machine learning (ML) for predictive maintenance applications. The details of ML are beyond the scope of this tutorial but to better understand ML techniques commonly used for predictive maintenance, check out the following notebook, which not only talks about how to use LSTM but also how to generate a sample dataset with [logsynth](https://github.com/tdunning/log-synth) that resembles what you might see in a real factory. You'll love this notebook because it explains how you can experiment with LSTM for predictive maintenance entirely on your laptop:
 
-
-### LSTM predictions for "About To Fail"
-
-This notebook shows how to train a binary classification model using an LSTM neural network in Keras to predict whether a failure will occur in an airplane engine within the next 30 seconds.
-![lstm-about_to_fail](/images/lstm-about_to_fail.png?raw=true "LSTM Binary Classification Model")
-
-If you want to actually try this out using synthesized factory iot data, then follow the instructions in this notebook:
 [https://github.com/mapr-demos/predictive-maintenance/blob/master/notebooks/jupyter/LSTM%20For%20Predictive%20Maintenance-ian01.ipynb](https://github.com/mapr-demos/predictive-maintenance/blob/master/notebooks/jupyter/LSTM%20For%20Predictive%20Maintenance-ian01.ipynb)
 
+![lstm-about_to_fail](/images/lstm-about_to_fail-50.png?raw=true "LSTM About To Fail prediction")
 
-### LSTM predictions for "Remaining Useful Life"
+Here are some of the other notebooks included in this repo that demonstrate ML concepts for predictive maintenance:
 
-This notebook shows how to train a point regression model using an LSTM neural network in Keras to predict the point in time when an airplane engine will fail.
-![lstm-rul](/images/lstm-rul.png?raw=true "LSTM Point Regression Model")
+* [LSTM predictions for Remaining Useful Life](https://github.com/mapr-demos/predictive-maintenance/blob/master/notebooks/jupyter/LSTM%20predictions%20for%20Remaining%20Useful%20Life.ipynb) shows how to train a point regression model using an LSTM neural network in Keras to predict the point in time when an airplane engine will fail.
+* [LSTM time series predictions from OpenTSDB](https://github.com/mapr-demos/predictive-maintenance/blob/master/notebooks/jupyter/LSTM%20time%20series%20prediction%20from%20OpenTSDB.ipynb) shows how to train a model to predict the next value in a sequence of numbers, which in this case, is a time series sequence of numbers stored in OpenTSDB. This notebook also shows how to load training data into Tensorflow using the REST API for OpenTSDB.
+* [RNN time series predictions from OpenTSDB](https://github.com/mapr-demos/predictive-maintenance/blob/master/notebooks/jupyter/RNN%20time%20series%20prediction%20from%20OpenTSDB.ipynb) also shows how to train a model to predict the next value in a sequence of numbers, except it uses an RNN model instead LSTM.
+* [RNN predictions for MapR-DB data via Drill](https://github.com/mapr-demos/predictive-maintenance/blob/master/notebooks/jupyter/RNN%20predictions%20on%20MapR-DB%20data%20via%20Drill.ipynb) also shows how to train a model to predict the next value in a sequence of numbers, except it reads time-series data from MapR-DB using Drill as a SQL engine.
 
-### LSTM time series predictions from OpenTSDB
-
-This notebook shows how to train a model to predict the next value in a sequence of numbers, which in this case, is a time series sequence of numbers stored in OpenTSDB. This notebook also shows how to load training data into Tensorflow using the REST API for OpenTSDB.
-![lstm-matplotlib](/images/lstm-matplotlib.png?raw=true "LSTM Time-Series Forecasting for OpenTSDB")
-
-### RNN time series predictions from OpenTSDB
-
-This notebook is the same as the last one, except it shows how to build an RNN model instead LSTM for predicting future values of time-series data in OpenTSDB.
-![rnn-matplotlib](/images/rnn-matplotlib.png?raw=true "RNN Time-Series Forecasting for OpenTSDB")
-
-### RNN predictions for MapR-DB data via Drill
-
-This notebook is the same as the last one, except it loads time-series data from MapR-DB instead of OpenTSDB.
-![rnn-zeppelin](/images/rnn-zeppelin.png?raw=true "RNN Time-Series Forecasting for MapR-DB")
-
-## References for StreamSets
+## StreamSets Demonstration
 
 To give you an idea of what dataflow management tools do, I’ve prepared a simple StreamSets project that you can run on a laptop with Docker. This project demonstrates a pipeline that streams time-series data recorded from an industrial HVAC system into OpenTSDB for visualization in Grafana. 
 
