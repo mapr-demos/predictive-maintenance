@@ -205,7 +205,7 @@ This will calculate FFTs on-the-fly for the high speed streaming data, and rende
 
 By now you should be able to see streaming IoT data, vibration faults, and device failures in the Grafana dashboard.
 
-![grafana dashboard](/images/grafana_screenshot.png?raw=true "Grafana Dashboard")
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/grafana_screenshot.png" width="70%" align="center">
 
 ## Step 10 - Explore IoT data with Apache Drill
 
@@ -272,14 +272,21 @@ Open Grafana at http://localhost:3000 and login with admin / admin
 
 Add http://hbase:4242 as an OpenTSDB datasource to Grafana. If you don’t know how to add a data source, refer to Grafana docs. Your datasource definition should look like this:
 
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/grafana_opentsdb_config.png" width="50%" align="center">
+
 Download the following Grafana dashboard file:
-https://github.com/mapr-demos/predictive-maintenance/blob/master/Grafana/IoT_dashboard.json 
-
-Import that file into Grafana. If you don’t know how to import a dashboard, see Grafana docs.
-
-Download, unzip, and copy the following HVAC data to the StreamSets container:
-https://github.com/mapr-demos/predictive-maintenance/blob/master/sample_dataset/mqtt.json.gz
 ```
+wget https://raw.githubusercontent.com/mapr-demos/predictive-maintenance/master/Grafana/IoT_dashboard.json
+```
+
+Import that file into Grafana. If you don’t know how to import a dashboard, see Grafana docs. The Grafana import dialog should look like this:
+
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/grafana_dashboard_config.png" width="50%" align="center">
+
+Download, unzip, and copy the MQTT dataset to the StreamSets container:
+
+```
+wget https://github.com/mapr-demos/predictive-maintenance/raw/master/sample_dataset/mqtt.json.gz
 unzip mqtt.json.gz
 docker cp mqtt.json sdc:/tmp/mqtt.json
 ```
@@ -287,10 +294,17 @@ docker cp mqtt.json sdc:/tmp/mqtt.json
 Open StreamSets at http://localhost:18630 and login with admin / admin
 
 Download and import the following pipeline into StreamSets. If you don’t know how to import a pipeline, refer to StreamSets docs.
-https://github.com/mapr-demos/predictive-maintenance/blob/master/StreamSets/MQTT%20File%20Tail.json 
+
+```
+wget https://raw.githubusercontent.com/mapr-demos/predictive-maintenance/master/StreamSets/MQTT%20File%20Tail.json
+```
 
 You will see a warning about a missing library in the “Parse MQTT JSON” stage. Click that stage and follow the instructions to install the Jython library.
 
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/streamSets_warning.png" width="50%" align="center">
+
 Finally, run the StreamSets pipeline.
+
+<img src="https://github.com/mapr-demos/predictive-maintenance/blob/master/images/grafana_streamset_animation.gif" width="90%" align="center">
 
 Hopefully, by setting up this pipeline and exploring StreamSets you’ll get the gist of what dataflow management tools can do.
