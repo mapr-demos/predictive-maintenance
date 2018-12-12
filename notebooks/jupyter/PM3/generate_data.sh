@@ -1,13 +1,22 @@
 #!/bin/bash
-
+###############################################################################
+# DESCRIPTION:
 # Generate 10 good/degraded/failure datasets for training
 # "stage 1" is what I call the state of a machine in good condition
 # "stage 2" is what I call the state of a machine in degrades, but still functional, condition
 # "stage 3" is what I call the state of a machine that is malfunctioning
-# We combine the data for all three stages to create a single picture of a machine that goes from performing well, to degraded, to failure.  The idea here is that we get enough of these pictures (e.g. 500 of them) then we will be able to train an ML model to predict that a machine is near failure when it's operating in what we have defined as the degraded state.
+# We combine the data for all three stages to create a single picture of a machine that goes from
+# performing well, to degraded, to failure.  The idea here is that we get enough of these pictures 
+# (e.g. 500 of them) then we will be able to train an ML model to predict that a machine is near failure 
+# when it's operating in what we have defined as the degraded state.
+###############################################################################
 NUM_DATASETS=19
 
 rm -f *stage* *train* *test*
+
+#############################################################
+# Generate training data
+#############################################################
 
 for i in `seq 0 $NUM_DATASETS`; do 
 stage1_length=$((450 + $RANDOM % 100));
@@ -29,7 +38,9 @@ done
 
 cat *-train.json >> PM_logsynth_train.json
 
-# Generate datasets for testing
+#############################################################
+# Generate testing data
+#############################################################
 
 stage1_length=500;
 stage2_length=50;
