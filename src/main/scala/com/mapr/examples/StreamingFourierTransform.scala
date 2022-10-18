@@ -1,48 +1,45 @@
 package com.mapr.examples
 
-import com.mapr.db.spark.{field, _}
-import com.mapr.db.spark.sql._
+import breeze.linalg.DenseVector
+import breeze.signal.fourierTr
+import org.apache.commons.codec.binary.Base64
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{SparkSession, _}
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types._
-import org.apache.spark.streaming.kafka09.{ConsumerStrategies, KafkaUtils, LocationStrategies}
+import org.apache.spark.sql.functions.asc
+import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.types.{DoubleType, StructField, StructType}
+import org.apache.spark.streaming.kafka010.{ConsumerStrategies, KafkaUtils, LocationStrategies}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
-import breeze.linalg.{DenseVector, norm}
-import breeze.signal._
+
 import java.io.DataOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
-import org.apache.commons.codec.binary.Base64
+import java.net.{HttpURLConnection, URL}
 
-
-/******************************************************************************
-  PURPOSE:
-
-  Calculate Fourier transforms for streaming time-series data. This is intended to demonstrate how to detect anomalies in data from vibration sensors.
-
-  BUILD:
-
-  mvn package
-  copy target/lib to your cluster
-
-  PRELIMINARY:
-
-  Simulate a stream of fast vibration data with this command:
-
-  java -cp target/factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.HighSpeedProducer /apps/fastdata:vibrations 10 http://localhost:3000
-
-  RUN:
-
-  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar <stream:topic> <vibration_change_threshold> <Grafana URL>
-
-  EXAMPLE:
-
-  /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibrations 25.0 http://localhost:3000
-
-  ****************************************************************************/
+/** ****************************************************************************
+  *PURPOSE:
+ *
+ *Calculate Fourier transforms for streaming time-series data. This is intended to demonstrate how to detect anomalies in data from vibration sensors.
+ *
+ *BUILD:
+ *
+ *mvn package
+  *copy target/lib to your cluster
+ *
+ *PRELIMINARY:
+ *
+ *Simulate a stream of fast vibration data with this command:
+ *
+ *java -cp target/factory-iot-tutorial-1.0-jar-with-dependencies.jar com.mapr.examples.HighSpeedProducer /apps/fastdata:vibrations 10 http://localhost:3000
+ *
+ *RUN:
+ *
+ * /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar <stream:topic> <vibration_change_threshold> <Grafana URL>
+ *
+ * EXAMPLE:
+ *
+ * /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.StreamingFourierTransform target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/fastdata:vibrations 25.0 http://localhost:3000
+ *
+ ****************************************************************************/
 
 object StreamingFourierTransform {
 
@@ -74,6 +71,7 @@ object StreamingFourierTransform {
     // Use this if you're working in spark-shell:
     // var ssc = new StreamingContext(sc,Seconds(5))
     val sc = ssc.sparkContext
+
     ssc.sparkContext.setLogLevel("ERROR")
     val topicsSet = args(0).split(",").toSet
     val kafkaParams = Map[String, String](
@@ -99,7 +97,9 @@ object StreamingFourierTransform {
     valuesDStream.foreachRDD { (rdd: RDD[String]) =>
       if (!rdd.isEmpty) {
         val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
+
         import spark.implicits._
+
         val ds: Dataset[Signal] = spark.read.schema(schema).json(rdd).as[Signal]
         val throughput: Double = ds.count().toDouble / ((System.nanoTime() - t0) / 1000000000d)
         msg_counter += ds.count()

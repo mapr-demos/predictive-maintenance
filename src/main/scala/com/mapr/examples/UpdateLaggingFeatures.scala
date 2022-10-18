@@ -5,17 +5,21 @@ import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{SparkSession, _}
 import org.apache.spark.sql.types._
-import org.apache.spark.streaming.kafka09.{ConsumerStrategies, KafkaUtils, LocationStrategies}
+import org.apache.spark.streaming.kafka010.{ConsumerStrategies, KafkaUtils, LocationStrategies}
 import org.apache.spark.streaming.{Seconds, StreamingContext, Time}
 import org.apache.spark.sql.SparkSession
 import com.mapr.db.spark.sql._
 import org.apache.spark.sql.functions._
 import com.mapr.db.spark._
 import com.mapr.db.spark.field
+
 import java.io.DataOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import org.apache.commons.codec.binary.Base64
+
+import java.security.cert.X509Certificate
+import javax.net.ssl.{HostnameVerifier, HttpsURLConnection, SSLContext, TrustManager, X509TrustManager}
 //import org.apache.spark.sql._
 
 /******************************************************************************
@@ -37,7 +41,7 @@ import org.apache.commons.codec.binary.Base64
 
   /opt/mapr/spark/spark-2.1.0/bin/spark-submit --class com.mapr.examples.UpdateLaggingFeatures target/factory-iot-tutorial-1.0-jar-with-dependencies.jar /apps/factory:failures /apps/mqtt_records http://localhost:3000
 
-  ****************************************************************************/
+ ****************************************************************************/
 
 object UpdateLaggingFeatures {
 
@@ -53,6 +57,15 @@ object UpdateLaggingFeatures {
     println("Failures will be annotated on Grafana at " + grafana_url)
     val topicsSet = args(0).split(",").toSet
     println("Waiting for messages on stream " + args(0) + "...")
+
+    //mykeystore.jks is the keystore
+    //In Chrome click the lock icon to the left of the url. Then click "Certificate Information".Go to the
+    //"Details" tab and click "Copy to file".Save it as a "base64 encoded X.509 (.cer)" to "SITENAME.cer".
+    // Copy $JAVA_HOME/lib/security/cacerts to your application's directory as "mykeystore.jks".
+
+    // Install the certificate
+    //with: keytool -keystore mykeystore.jks -storepass changeit -importcert -alias SITENAME -trustcacerts -file SITE.cer
+    //System.setProperty("javax.net.ssl.trustStore", "mykeystore.jks")
 
     val schema = StructType(Array(
       StructField("timestamp", StringType, nullable = false),
@@ -98,9 +111,16 @@ object UpdateLaggingFeatures {
       if (!rdd.isEmpty) {
         val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
         import spark.implicits._
-        val ds: Dataset[FailureEvent] = spark.read.schema(schema).json(rdd).as[FailureEvent]
+        println("**************************")
+        rdd.collect().foreach(println)
+        println("**************************")
+        val rdd1 = rdd.filter( x => x !=null)
+        rdd1.collect().foreach(println)
+        println("**************************")
+        val ds: Dataset[FailureEvent] = spark.read.schema(schema).json(rdd1).na.drop().as[FailureEvent]
         println("Failure events received from stream: " + args(0) + ":")
-        ds.show()
+        val ds1 = ds.na.drop("any")
+        ds1.show()
 
 
         // TODO: iterate on each reported failure, not just the first one.
@@ -110,9 +130,9 @@ object UpdateLaggingFeatures {
         //        )
 
         // get the first failure time:
-        val failure_time = ds.select("timestamp").map(r => r.getString(0)).collect()(0).toString()
+        val failure_time = ds1.select("timestamp").map(r => r.getString(0)).collect()(0).toString()
         // get the corresponding failed device:
-        val deviceName = ds.select("deviceName").map(r => r.getString(0)).collect()(0).toString()
+        val deviceName = ds1.select("deviceName").map(r => r.getString(0)).collect()(0).toString()
 
         // Load the MQTT data table from MapR-DB JSON
         // The table schema will be inferred when we loadFromMapRDB:
@@ -186,14 +206,36 @@ object UpdateLaggingFeatures {
     println("---done---")
   }
 
+  private val trustAllManager = {
+    val manager = new X509TrustManager() {
+      def getAcceptedIssuers: Array[X509Certificate] = null
+
+      def checkClientTrusted(certs: Array[X509Certificate], authType: String): Unit = {}
+
+      def checkServerTrusted(certs: Array[X509Certificate], authType: String): Unit = {}
+    }
+    Array[TrustManager](manager)
+  }
   // HTTP POST request
   @throws[Exception]
   private def NotfyGrafana(grafana_url: String, title: String, text: String): Unit = {
+    val sc = SSLContext.getInstance("SSL")
+    sc.init(null, trustAllManager, new java.security.SecureRandom())
+    HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory)
+
+    import javax.net.ssl.SSLSession
+    // Create all-trusting host name verifier// Create all-trusting host name verifier
+
+    val allHostsValid = new HostnameVerifier() {
+      def verify(hostname: String, session: SSLSession) = true
+    }
+    HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid)
+
     val USER_AGENT = "Mozilla/5.0"
     val url = grafana_url + "/api/annotations"
     val obj = new URL(url)
     val con = obj.openConnection.asInstanceOf[HttpURLConnection]
-    val user_pass = "admin:admin"
+    val user_pass = "mapr:mapr"
     val encoded = Base64.encodeBase64String(user_pass.getBytes)
     con.setRequestProperty("Authorization", "Basic " + encoded)
     con.setRequestMethod("POST")
@@ -213,4 +255,3 @@ object UpdateLaggingFeatures {
   }
 
 }
-

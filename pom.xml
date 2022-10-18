@@ -11,11 +11,11 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <encoding>UTF-8</encoding>
-        <scala.version>2.11.8</scala.version>
-        <scala.binary.version>2.11</scala.binary.version>
-        <ojai.version>2.0-mapr-1710</ojai.version>
-        <spark.version>2.1.0-mapr-1801</spark.version>
-        <mapr.library.version>6.0.0-mapr</mapr.library.version>
+        <scala.version>2.12.8</scala.version>
+        <scala.binary.version>2.12</scala.binary.version>
+        <spark.version>3.2.0.0-eep-810</spark.version>
+        <ojai.version>3.1-mapr</ojai.version>
+        <mapr.library.version>7.0.0.0-mapr</mapr.library.version>
         <maven-scala-plugin.version>2.15.2</maven-scala-plugin.version>
     </properties>
 
@@ -55,6 +55,11 @@
             <version>${spark.version}</version>
         </dependency>
 
+        <dependency>
+            <artifactId>ojai-scala</artifactId>
+            <groupId>org.ojai</groupId>
+            <version>${ojai.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -64,7 +69,7 @@
 
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming-kafka-0-9_${scala.binary.version}</artifactId>
+            <artifactId>spark-streaming-kafka-0-10_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
         </dependency>
 
@@ -83,8 +88,8 @@
 
         <dependency>
             <groupId>com.mapr.db</groupId>
-            <artifactId>maprdb-spark</artifactId>
-            <version>${mapr.library.version}</version>
+            <artifactId>maprdb-spark_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
         </dependency>
 
         <dependency>
@@ -96,11 +101,6 @@
             <groupId>com.googlecode.json-simple</groupId>
             <artifactId>json-simple</artifactId>
             <version>1.1</version>
-        </dependency>
-        <dependency>
-            <artifactId>ojai</artifactId>
-            <groupId>org.ojai</groupId>
-            <version>${ojai.version}</version>
         </dependency>
         <dependency>
             <artifactId>mapr-ojai-driver</artifactId>
@@ -134,7 +134,7 @@
                 </executions>
                 <configuration>
                     <jvmArgs>
-                        <jvmArg>-Xss10M</jvmArg>
+                        <jvmArg>-Xss20M</jvmArg>
                     </jvmArgs>
                 </configuration>
             </plugin>

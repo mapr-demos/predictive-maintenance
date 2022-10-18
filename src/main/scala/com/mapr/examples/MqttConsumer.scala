@@ -5,7 +5,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{SparkSession, _}
 import org.apache.spark.sql.types._
-import org.apache.spark.streaming.kafka09.{ConsumerStrategies, KafkaUtils, LocationStrategies}
+import org.apache.spark.streaming.kafka010.{ConsumerStrategies, KafkaUtils, LocationStrategies}
 import org.apache.spark.streaming.{Seconds, StreamingContext, Time}
 import org.apache.spark.sql.SparkSession
 import com.mapr.db.spark.sql._
@@ -361,6 +361,7 @@ object MqttConsumer {
     val ssc = new StreamingContext(sparkConf, Seconds(2))
 
     ssc.sparkContext.setLogLevel("ERROR")
+    ssc.sparkContext.getConf.set("spark.sql.legacy.timeParserPolicy","LEGACY")
     val topicsSet = args(0).split(",").toSet
 
     val kafkaParams = Map[String, String](
@@ -408,6 +409,7 @@ object MqttConsumer {
 
         // Here's an example showing how to only look at data while the factory is operating (because Panel2Power will always be nonzero then)
 //        val ds2 = ds.filter(d => {d.Panel2Power != "0"}).map(d => (d.Chiller1PumpStatus, d.Chiller2PumpStatus, d.Boiler1PumpStatus, d.Boiler2PumpStatus, d.Panel1Power, d.Panel2Power, d.Panel3Power))
+        val ds1 = ds.na.drop("any")
         ds.select("timestamp","OutsideAirTemp","Panel1Power","Panel2Power","Panel3Power").show
         // Here's another way to show those columns:
         // ds.map(d => (d.timestamp, d.OutsideAirTemp, d.Panel1Power, d.Panel2Power, d.Panel3Power)).show()
